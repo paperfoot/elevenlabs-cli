@@ -237,7 +237,7 @@ pub struct SfxArgs {
     pub prompt_influence: Option<f32>,
 
     /// Loop the generated sound
-    #[arg(long, name = "loop")]
+    #[arg(long = "loop")]
     pub looping: bool,
 
     /// Output format (default mp3_44100_128)
