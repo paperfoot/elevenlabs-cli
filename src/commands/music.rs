@@ -35,9 +35,9 @@ async fn compose(
         body.insert("music_length_ms".into(), serde_json::json!(ms));
     }
 
-    // The music endpoint streams back audio bytes directly.
+    // POST /v1/music streams back audio bytes directly.
     let audio = client
-        .post_json_bytes("/v1/music/compose", &serde_json::Value::Object(body))
+        .post_json_bytes("/v1/music", &serde_json::Value::Object(body))
         .await?;
     let bytes_written = audio.len();
 
@@ -79,7 +79,7 @@ async fn plan(
         body.insert("music_length_ms".into(), serde_json::json!(ms));
     }
     let resp: serde_json::Value = client
-        .post_json("/v1/music/plans/compose", &serde_json::Value::Object(body))
+        .post_json("/v1/music/plan", &serde_json::Value::Object(body))
         .await?;
     output::print_success_or(ctx, &resp, |v| {
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());

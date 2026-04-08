@@ -159,6 +159,8 @@ async fn convert(
 }
 
 async fn resolve_voice_by_name(client: &ElevenLabsClient, name: &str) -> Result<String, AppError> {
+    // Same client-side match strategy as tts.rs — the server-side search
+    // isn't a strict substring filter, so we resolve locally.
     let query = [("search", name)];
     let resp: serde_json::Value = client.get_json_with_query("/v1/voices", &query).await?;
     let voices = resp
@@ -166,19 +168,34 @@ async fn resolve_voice_by_name(client: &ElevenLabsClient, name: &str) -> Result<
         .and_then(|v| v.as_array())
         .cloned()
         .unwrap_or_default();
+
+    let needle = name.to_lowercase();
+    let mut exact: Option<&serde_json::Value> = None;
+    let mut prefix: Option<&serde_json::Value> = None;
+    let mut substring: Option<&serde_json::Value> = None;
     for v in &voices {
-        if v.get("name").and_then(|n| n.as_str()) == Some(name) {
-            if let Some(id) = v.get("voice_id").and_then(|n| n.as_str()) {
-                return Ok(id.to_string());
-            }
+        let Some(vname) = v.get("name").and_then(|n| n.as_str()) else {
+            continue;
+        };
+        let lower = vname.to_lowercase();
+        if lower == needle {
+            exact = Some(v);
+            break;
+        }
+        if prefix.is_none() && lower.starts_with(&needle) {
+            prefix = Some(v);
+        }
+        if substring.is_none() && lower.contains(&needle) {
+            substring = Some(v);
         }
     }
-    if let Some(v) = voices.first() {
+    if let Some(v) = exact.or(prefix).or(substring) {
         if let Some(id) = v.get("voice_id").and_then(|n| n.as_str()) {
             return Ok(id.to_string());
         }
     }
     Err(AppError::InvalidInput(format!(
-        "no voice found matching '{name}'"
+        "no voice in your library matches '{name}'. \
+         List voices with: elevenlabs voices list"
     )))
 }

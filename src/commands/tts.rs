@@ -140,21 +140,45 @@ async fn resolve_voice_name(client: &ElevenLabsClient, name: &str) -> Result<Str
         .cloned()
         .unwrap_or_default();
 
-    // Prefer exact name match, else first result.
+    // Client-side match: the server-side `search` param on /v1/voices is a
+    // weak relevance filter, not a strict substring match — it may return
+    // every premade voice. We filter locally so `--voice Rachel` doesn't
+    // silently resolve to whatever came back first.
+    //
+    // Priority: exact (case-insensitive) > starts-with > substring. If
+    // there's no match we error out so the user sees the problem rather
+    // than getting the wrong voice.
+    let needle_lower = name.to_lowercase();
+    let mut exact: Option<&serde_json::Value> = None;
+    let mut prefix: Option<&serde_json::Value> = None;
+    let mut substring: Option<&serde_json::Value> = None;
+
     for v in &voices {
-        if v.get("name").and_then(|n| n.as_str()) == Some(name) {
-            if let Some(id) = v.get("voice_id").and_then(|n| n.as_str()) {
-                return Ok(id.to_string());
-            }
+        let Some(vname) = v.get("name").and_then(|n| n.as_str()) else {
+            continue;
+        };
+        let lower = vname.to_lowercase();
+        if lower == needle_lower {
+            exact = Some(v);
+            break;
+        }
+        if prefix.is_none() && lower.starts_with(&needle_lower) {
+            prefix = Some(v);
+        }
+        if substring.is_none() && lower.contains(&needle_lower) {
+            substring = Some(v);
         }
     }
-    if let Some(v) = voices.first() {
+
+    let chosen = exact.or(prefix).or(substring);
+    if let Some(v) = chosen {
         if let Some(id) = v.get("voice_id").and_then(|n| n.as_str()) {
             return Ok(id.to_string());
         }
     }
     Err(AppError::InvalidInput(format!(
-        "no voice found matching '{name}'"
+        "no voice in your library matches '{name}'. \
+         List voices with: elevenlabs voices list"
     )))
 }
 
