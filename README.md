@@ -284,6 +284,14 @@ repo = "elevenlabs-cli"
 
 **Precedence** (highest wins): CLI flags → environment variables (`ELEVENLABS_API_KEY`, `ELEVENLABS_CLI_*`) → config file → defaults. Secrets are masked in `config show`. The config file is chmod `0600` on Unix.
 
+**Useful env vars**
+
+| Variable | Purpose |
+|---|---|
+| `ELEVENLABS_API_KEY` | Your ElevenLabs API key. Overrides the config file. |
+| `ELEVENLABS_API_BASE_URL` | Override the API base URL (default `https://api.elevenlabs.io`). Use for staging / mock servers. |
+| `ELEVENLABS_CLI_CONFIG` | Full path override for `config.toml`. Handy for tests and CI. |
+
 ---
 
 ## Output contract

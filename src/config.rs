@@ -115,6 +115,14 @@ impl AppConfig {
 }
 
 pub fn config_path() -> PathBuf {
+    // Allow a full-path override for tests and power users. This is the
+    // exact path to the config.toml file, not a directory.
+    if let Ok(p) = std::env::var("ELEVENLABS_CLI_CONFIG") {
+        let p = p.trim();
+        if !p.is_empty() {
+            return PathBuf::from(p);
+        }
+    }
     directories::ProjectDirs::from("", "", "elevenlabs-cli")
         .map(|d| d.config_dir().to_path_buf())
         .unwrap_or_else(|| PathBuf::from("."))
