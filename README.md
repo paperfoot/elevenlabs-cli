@@ -12,8 +12,8 @@ TTS • STT • Sound Effects • Voice Cloning • Voice Design • Conversatio
 &nbsp;
 [![Follow @longevityboris](https://img.shields.io/badge/Follow_%40longevityboris-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/longevityboris)
 
-[![crates.io](https://img.shields.io/crates/v/elevenlabs-cli?style=for-the-badge&logo=rust&color=orange)](https://crates.io/crates/elevenlabs-cli)
-[![Downloads](https://img.shields.io/crates/d/elevenlabs-cli?style=for-the-badge&logo=rust&color=orange)](https://crates.io/crates/elevenlabs-cli)
+[![crates.io](https://img.shields.io/crates/v/elevenlabs?style=for-the-badge&logo=rust&color=orange)](https://crates.io/crates/elevenlabs)
+[![Downloads](https://img.shields.io/crates/d/elevenlabs?style=for-the-badge&logo=rust&color=orange)](https://crates.io/crates/elevenlabs)
 [![CI](https://img.shields.io/github/actions/workflow/status/199-biotechnologies/elevenlabs-cli/ci.yml?style=for-the-badge&logo=github-actions&label=CI)](https://github.com/199-biotechnologies/elevenlabs-cli/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![MSRV 1.85+](https://img.shields.io/badge/MSRV-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
@@ -52,11 +52,11 @@ Every command auto-switches between **coloured human output** (terminal) and **J
 
 ```bash
 # cargo (Linux, macOS, Windows)
-cargo install elevenlabs-cli
+cargo install elevenlabs          # crate name is `elevenlabs`, binary name is `elevenlabs`
 
 # Homebrew (macOS, Linux)
 brew tap 199-biotechnologies/tap
-brew install elevenlabs-cli
+brew install elevenlabs
 
 # Prebuilt binaries — Linux, macOS (x86_64 + arm64), Windows
 curl -L https://github.com/199-biotechnologies/elevenlabs-cli/releases/latest/download/elevenlabs-$(uname -s)-$(uname -m).tar.gz | tar xz

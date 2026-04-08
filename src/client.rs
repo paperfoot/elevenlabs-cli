@@ -12,7 +12,7 @@ use crate::config::AppConfig;
 use crate::error::AppError;
 
 pub const DEFAULT_BASE_URL: &str = "https://api.elevenlabs.io";
-pub const USER_AGENT: &str = concat!("elevenlabs-cli/", env!("CARGO_PKG_VERSION"));
+pub const USER_AGENT: &str = concat!("elevenlabs-cli/", env!("CARGO_PKG_VERSION"), " (+https://github.com/199-biotechnologies/elevenlabs-cli)");
 
 #[derive(Clone)]
 pub struct ElevenLabsClient {

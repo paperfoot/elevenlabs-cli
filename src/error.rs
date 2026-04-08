@@ -97,7 +97,7 @@ impl AppError {
                 "Retry the command; check status.elevenlabs.io if it persists".into()
             }
             Self::Transient(_) | Self::Io(_) | Self::Http(_) => "Retry the command".into(),
-            Self::Update(_) => "Retry later, or run: cargo install elevenlabs-cli".into(),
+            Self::Update(_) => "Retry later, or run: cargo install elevenlabs".into(),
         }
     }
 }
