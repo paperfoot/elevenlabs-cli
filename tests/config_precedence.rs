@@ -8,22 +8,57 @@ fn bin() -> Command {
     Command::cargo_bin("elevenlabs").unwrap()
 }
 
-/// Write a TOML config under a fake HOME so the test doesn't touch real
-/// state. Returns the HOME path so the test can set it on Command.
-fn fake_home_with_config(api_key: &str) -> tempfile::TempDir {
-    let home = tempfile::tempdir().unwrap();
-    // macOS uses ~/Library/Application Support/<app>/, Linux uses
-    // ~/.config/<app>/. Write to both so the test runs on either.
-    for rel in [
-        "Library/Application Support/elevenlabs-cli",
-        ".config/elevenlabs-cli",
-    ] {
-        let dir = home.path().join(rel);
-        std::fs::create_dir_all(&dir).unwrap();
+/// Build a fake environment that redirects the config lookup to a temp
+/// directory on every platform. Returns (tempdir, env_pairs_to_set).
+/// We write config.toml to *every* candidate location and set the
+/// matching env var so the `directories` crate resolves to our tempdir
+/// regardless of OS.
+fn fake_env_with_config(
+    api_key: &str,
+) -> (tempfile::TempDir, Vec<(&'static str, std::path::PathBuf)>) {
+    let root = tempfile::tempdir().unwrap();
+    let p = root.path();
+
+    // macOS: ~/Library/Application Support/<app>/config.toml
+    let mac_dir = p.join("Library/Application Support/elevenlabs-cli");
+    // Linux: $XDG_CONFIG_HOME/<app>/config.toml or $HOME/.config/<app>/config.toml
+    let linux_dir = p.join(".config/elevenlabs-cli");
+    // Windows: %APPDATA%/<app>/config.toml
+    let win_dir = p.join("AppData/Roaming/elevenlabs-cli");
+
+    for dir in [&mac_dir, &linux_dir, &win_dir] {
+        std::fs::create_dir_all(dir).unwrap();
         let mut f = std::fs::File::create(dir.join("config.toml")).unwrap();
         writeln!(f, "api_key = \"{api_key}\"").unwrap();
     }
-    home
+
+    let envs: Vec<(&'static str, std::path::PathBuf)> = vec![
+        ("HOME", p.to_path_buf()),
+        ("XDG_CONFIG_HOME", linux_dir.parent().unwrap().to_path_buf()),
+        ("APPDATA", p.join("AppData/Roaming")),
+        ("LOCALAPPDATA", p.join("AppData/Local")),
+        ("USERPROFILE", p.to_path_buf()),
+    ];
+    (root, envs)
+}
+
+fn run_config_show(
+    envs: &[(&'static str, std::path::PathBuf)],
+    extra_env: Option<(&str, &str)>,
+    clear_api_key: bool,
+) -> std::process::Output {
+    let mut cmd = bin();
+    for (k, v) in envs {
+        cmd.env(k, v);
+    }
+    if clear_api_key {
+        cmd.env_remove("ELEVENLABS_API_KEY")
+            .env_remove("ELEVENLABS_CLI_API_KEY");
+    }
+    if let Some((k, v)) = extra_env {
+        cmd.env(k, v);
+    }
+    cmd.args(["config", "show", "--json"]).output().unwrap()
 }
 
 fn extract_api_key(stdout: &[u8]) -> String {
@@ -33,18 +68,14 @@ fn extract_api_key(stdout: &[u8]) -> String {
 
 #[test]
 fn env_var_wins_over_config_file() {
-    let home = fake_home_with_config("config_key_xxxxxxxxxxxx");
-    let out = bin()
-        .env("HOME", home.path())
-        .env("XDG_CONFIG_HOME", home.path().join(".config"))
-        .env("ELEVENLABS_API_KEY", "env_key_yyyyyyyyyyyyy")
-        .args(["config", "show", "--json"])
-        .output()
-        .unwrap();
+    let (_root, envs) = fake_env_with_config("config_key_xxxxxxxxxxxx");
+    let out = run_config_show(
+        &envs,
+        Some(("ELEVENLABS_API_KEY", "env_key_yyyyyyyyyyyyy")),
+        false,
+    );
     assert!(out.status.success(), "config show should exit 0");
     let masked = extract_api_key(&out.stdout);
-    // Masked format is "env_ke...yyyy" or similar — we only need to know
-    // the env-var's distinctive prefix/suffix wins over the config one.
     assert!(
         masked.starts_with("env_ke"),
         "expected env key to win, got masked={masked}"
@@ -57,16 +88,13 @@ fn env_var_wins_over_config_file() {
 
 #[test]
 fn config_file_wins_over_defaults_when_no_env() {
-    let home = fake_home_with_config("config_key_aaaaaaaaaaaa");
-    let out = bin()
-        .env("HOME", home.path())
-        .env("XDG_CONFIG_HOME", home.path().join(".config"))
-        .env_remove("ELEVENLABS_API_KEY")
-        .env_remove("ELEVENLABS_CLI_API_KEY")
-        .args(["config", "show", "--json"])
-        .output()
-        .unwrap();
-    assert!(out.status.success(), "config show should exit 0");
+    let (_root, envs) = fake_env_with_config("config_key_aaaaaaaaaaaa");
+    let out = run_config_show(&envs, None, true);
+    assert!(
+        out.status.success(),
+        "config show should exit 0; stderr={}",
+        String::from_utf8_lossy(&out.stderr)
+    );
     let masked = extract_api_key(&out.stdout);
     assert!(
         masked.starts_with("config"),
