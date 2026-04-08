@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 320" role="img" aria-label="elevenlabs-cli">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0b0b0f"/>
+      <stop offset="1" stop-color="#141821"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#9f7aea"/>
+      <stop offset="0.5" stop-color="#4fd1c5"/>
+      <stop offset="1" stop-color="#f6ad55"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0" stop-color="#4fd1c5" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#9f7aea" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="320" fill="url(#bg)"/>
+
+  <!-- Decorative waveform -->
+  <g transform="translate(60,180)" fill="none" stroke="url(#wave)" stroke-width="4" stroke-linecap="round">
+    <path d="M0 0 Q 20 -60 40 0 T 80 0 T 120 0 T 160 0 T 200 0 T 240 0 T 280 0 T 320 0 T 360 0 T 400 0 T 440 0 T 480 0 T 520 0 T 560 0 T 600 0 T 640 0 T 680 0 T 720 0 T 760 0 T 800 0 T 840 0 T 880 0 T 920 0 T 960 0 T 1000 0 T 1040 0 T 1080 0 T 1120 0 T 1160 0"/>
+    <path d="M0 0 Q 20 40 40 0 T 80 0 T 120 0 T 160 0 T 200 0 T 240 0 T 280 0 T 320 0 T 360 0 T 400 0 T 440 0 T 480 0 T 520 0 T 560 0 T 600 0 T 640 0 T 680 0 T 720 0 T 760 0 T 800 0 T 840 0 T 880 0 T 920 0 T 960 0 T 1000 0 T 1040 0 T 1080 0 T 1120 0 T 1160 0" opacity="0.4"/>
+  </g>
+
+  <!-- Title -->
+  <g transform="translate(80,120)" font-family="ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo, monospace">
+    <text font-size="72" font-weight="800" fill="#ffffff">elevenlabs<tspan fill="url(#accent)">-cli</tspan></text>
+    <text y="44" font-size="22" font-weight="500" fill="#a0aec0">
+      Agent-friendly Rust CLI for the ElevenLabs AI audio platform
+    </text>
+    <text y="74" font-size="18" font-weight="400" fill="#718096">
+      TTS &#183; STT &#183; Sound Effects &#183; Voice Cloning &#183; Conversational AI &#183; Music
+    </text>
+  </g>
+
+  <!-- Terminal snippet -->
+  <g transform="translate(770,40)">
+    <rect width="460" height="240" rx="10" ry="10" fill="#0d1117" stroke="#2d3748" stroke-width="1"/>
+    <circle cx="20" cy="22" r="6" fill="#ff5f56"/>
+    <circle cx="40" cy="22" r="6" fill="#ffbd2e"/>
+    <circle cx="60" cy="22" r="6" fill="#27c93f"/>
+    <g font-family="ui-monospace, 'JetBrains Mono', Menlo, monospace" font-size="16">
+      <text x="20" y="70" fill="#4fd1c5">$ </text><text x="40" y="70" fill="#e2e8f0">elevenlabs tts "hello" -o hi.mp3</text>
+      <text x="20" y="100" fill="#68d391">+ hi.mp3 (46.4 KB, voice=Boris)</text>
+
+      <text x="20" y="140" fill="#4fd1c5">$ </text><text x="40" y="140" fill="#e2e8f0">elevenlabs sfx "ocean waves"</text>
+      <text x="20" y="170" fill="#68d391">+ sfx_1745.mp3 (33.1 KB, 2.0s)</text>
+
+      <text x="20" y="210" fill="#4fd1c5">$ </text><text x="40" y="210" fill="#e2e8f0">elevenlabs agents list --json | jq</text>
+    </g>
+  </g>
+</svg>

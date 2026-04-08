@@ -1,0 +1,35 @@
+# Rust build artifacts
+/target
+**/*.rs.bk
+
+# Editor / IDE / tooling files
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+.DS_Store
+
+# Local env / secrets — NEVER commit
+.env
+.env.*
+*.env
+*.key
+*.pem
+secrets.toml
+config.local.toml
+api_key*
+*secret*
+
+# Local config or sample configs with real keys
+config.toml
+
+# Local test artifacts
+/test-output/
+*.mp3
+*.wav
+*.flac
+*.m4a
+*.opus
+*.ogg
+*.webm
