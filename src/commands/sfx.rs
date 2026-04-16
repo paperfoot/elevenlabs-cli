@@ -23,9 +23,9 @@ pub async fn run(ctx: Ctx, args: SfxArgs) -> Result<(), AppError> {
         return Err(AppError::InvalidInput("text is empty".into()));
     }
     if let Some(d) = args.duration {
-        if !(0.5..=22.0).contains(&d) {
+        if !(0.5..=30.0).contains(&d) {
             return Err(AppError::InvalidInput(
-                "duration must be between 0.5 and 22 seconds".into(),
+                "duration must be between 0.5 and 30 seconds".into(),
             ));
         }
     }
@@ -47,6 +47,9 @@ pub async fn run(ctx: Ctx, args: SfxArgs) -> Result<(), AppError> {
         body.insert("prompt_influence".into(), serde_json::json!(p));
     }
     body.insert("loop".into(), serde_json::json!(args.looping));
+    if let Some(m) = &args.model {
+        body.insert("model_id".into(), serde_json::Value::String(m.clone()));
+    }
 
     let query = [("output_format", output_format.as_str())];
     let audio = client

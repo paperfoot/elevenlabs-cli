@@ -31,23 +31,62 @@ pub async fn dispatch(ctx: Ctx, action: VoicesAction) -> Result<(), AppError> {
             sort,
             direction,
             limit,
-        } => list(ctx, &client, search, sort, direction, limit).await,
+            show_legacy,
+        } => list(ctx, &client, search, sort, direction, limit, show_legacy).await,
         VoicesAction::Show { voice_id } => show(ctx, &client, &voice_id).await,
         VoicesAction::Search { query } => {
-            list(ctx, &client, Some(query), "name".into(), "asc".into(), 50).await
+            list(
+                ctx,
+                &client,
+                Some(query),
+                "name".into(),
+                "asc".into(),
+                50,
+                false,
+            )
+            .await
         }
         VoicesAction::Library {
             search,
             page,
             page_size,
+            category,
             gender,
             age,
             accent,
             language,
+            locale,
             use_case,
+            featured,
+            min_notice_days,
+            include_custom_rates,
+            include_live_moderated,
+            reader_app_enabled,
+            owner_id,
+            sort,
         } => {
             library(
-                ctx, &client, search, page, page_size, gender, age, accent, language, use_case,
+                ctx,
+                &client,
+                LibraryArgs {
+                    search,
+                    page,
+                    page_size,
+                    category,
+                    gender,
+                    age,
+                    accent,
+                    language,
+                    locale,
+                    use_case,
+                    featured,
+                    min_notice_days,
+                    include_custom_rates,
+                    include_live_moderated,
+                    reader_app_enabled,
+                    owner_id,
+                    sort,
+                },
             )
             .await
         }
@@ -60,14 +99,72 @@ pub async fn dispatch(ctx: Ctx, action: VoicesAction) -> Result<(), AppError> {
             description,
             text,
             output_dir,
-        } => design(ctx, &client, description, text, output_dir).await,
+            model,
+            loudness,
+            seed,
+            guidance_scale,
+            enhance,
+            stream_previews,
+            quality,
+        } => {
+            design(
+                ctx,
+                &client,
+                DesignArgs {
+                    description,
+                    text,
+                    output_dir,
+                    model,
+                    loudness,
+                    seed,
+                    guidance_scale,
+                    enhance,
+                    stream_previews,
+                    quality,
+                },
+            )
+            .await
+        }
         VoicesAction::SavePreview {
             generated_voice_id,
             name,
             description,
         } => save_preview(ctx, &client, generated_voice_id, name, description).await,
-        VoicesAction::Delete { voice_id } => delete(ctx, &client, &voice_id).await,
+        VoicesAction::Delete { voice_id, yes } => delete(ctx, &client, &voice_id, yes).await,
     }
+}
+
+struct LibraryArgs {
+    search: Option<String>,
+    page: u32,
+    page_size: u32,
+    category: Option<String>,
+    gender: Option<String>,
+    age: Option<String>,
+    accent: Option<String>,
+    language: Option<String>,
+    locale: Option<String>,
+    use_case: Option<String>,
+    featured: bool,
+    min_notice_days: Option<u32>,
+    include_custom_rates: bool,
+    include_live_moderated: bool,
+    reader_app_enabled: bool,
+    owner_id: Option<String>,
+    sort: Option<String>,
+}
+
+struct DesignArgs {
+    description: String,
+    text: Option<String>,
+    output_dir: Option<String>,
+    model: Option<String>,
+    loudness: Option<f32>,
+    seed: Option<u32>,
+    guidance_scale: Option<f32>,
+    enhance: bool,
+    stream_previews: bool,
+    quality: Option<f32>,
 }
 
 // ── list ───────────────────────────────────────────────────────────────────
@@ -79,6 +176,7 @@ async fn list(
     sort: String,
     direction: String,
     limit: u32,
+    show_legacy: bool,
 ) -> Result<(), AppError> {
     let mut params: Vec<(&str, String)> = vec![
         ("sort", sort),
@@ -87,6 +185,9 @@ async fn list(
     ];
     if let Some(s) = search {
         params.push(("search", s));
+    }
+    if show_legacy {
+        params.push(("show_legacy", "true".to_string()));
     }
 
     // Use /v2/voices — the only endpoint that honours search/sort/page_size.
@@ -132,40 +233,57 @@ async fn show(ctx: Ctx, client: &ElevenLabsClient, voice_id: &str) -> Result<(),
 
 // ── library (shared voices) ────────────────────────────────────────────────
 
-#[allow(clippy::too_many_arguments)]
-async fn library(
-    ctx: Ctx,
-    client: &ElevenLabsClient,
-    search: Option<String>,
-    page: u32,
-    page_size: u32,
-    gender: Option<String>,
-    age: Option<String>,
-    accent: Option<String>,
-    language: Option<String>,
-    use_case: Option<String>,
-) -> Result<(), AppError> {
+async fn library(ctx: Ctx, client: &ElevenLabsClient, args: LibraryArgs) -> Result<(), AppError> {
+    // The API is 1-indexed on page. v0.1.3 and earlier sent 0-indexed which
+    // caused a silent off-by-one on this endpoint.
     let mut params: Vec<(&str, String)> = vec![
-        ("page", page.to_string()),
-        ("page_size", page_size.to_string()),
+        ("page", args.page.to_string()),
+        ("page_size", args.page_size.to_string()),
     ];
-    if let Some(s) = search {
+    if let Some(s) = args.search {
         params.push(("search", s));
     }
-    if let Some(v) = gender {
+    if let Some(v) = args.category {
+        params.push(("category", v));
+    }
+    if let Some(v) = args.gender {
         params.push(("gender", v));
     }
-    if let Some(v) = age {
+    if let Some(v) = args.age {
         params.push(("age", v));
     }
-    if let Some(v) = accent {
+    if let Some(v) = args.accent {
         params.push(("accent", v));
     }
-    if let Some(v) = language {
+    if let Some(v) = args.language {
         params.push(("language", v));
     }
-    if let Some(v) = use_case {
+    if let Some(v) = args.locale {
+        params.push(("locale", v));
+    }
+    if let Some(v) = args.use_case {
         params.push(("use_cases", v));
+    }
+    if args.featured {
+        params.push(("featured", "true".to_string()));
+    }
+    if let Some(v) = args.min_notice_days {
+        params.push(("min_notice_period_days", v.to_string()));
+    }
+    if args.include_custom_rates {
+        params.push(("include_custom_rates", "true".to_string()));
+    }
+    if args.include_live_moderated {
+        params.push(("include_live_moderated", "true".to_string()));
+    }
+    if args.reader_app_enabled {
+        params.push(("reader_app_enabled", "true".to_string()));
+    }
+    if let Some(v) = args.owner_id {
+        params.push(("owner_id", v));
+    }
+    if let Some(v) = args.sort {
+        params.push(("sort", v));
     }
 
     let resp: serde_json::Value = client
@@ -289,23 +407,25 @@ async fn clone(
 
 // ── design (voice generation previews) ─────────────────────────────────────
 
-async fn design(
-    ctx: Ctx,
-    client: &ElevenLabsClient,
-    description: String,
-    text: Option<String>,
-    output_dir: Option<String>,
-) -> Result<(), AppError> {
-    if description.trim().is_empty() {
+async fn design(ctx: Ctx, client: &ElevenLabsClient, args: DesignArgs) -> Result<(), AppError> {
+    if args.description.trim().is_empty() {
         return Err(AppError::InvalidInput("description is required".into()));
+    }
+    if let Some(t) = &args.text {
+        let len = t.chars().count();
+        if !(100..=1000).contains(&len) {
+            return Err(AppError::InvalidInput(
+                "--text must be 100 to 1000 characters".into(),
+            ));
+        }
     }
 
     let mut body = serde_json::Map::new();
     body.insert(
         "voice_description".into(),
-        serde_json::Value::String(description.clone()),
+        serde_json::Value::String(args.description.clone()),
     );
-    match &text {
+    match &args.text {
         Some(t) => {
             body.insert("text".into(), serde_json::Value::String(t.clone()));
             body.insert("auto_generate_text".into(), serde_json::Value::Bool(false));
@@ -313,6 +433,27 @@ async fn design(
         None => {
             body.insert("auto_generate_text".into(), serde_json::Value::Bool(true));
         }
+    }
+    if let Some(m) = &args.model {
+        body.insert("model_id".into(), serde_json::Value::String(m.clone()));
+    }
+    if let Some(l) = args.loudness {
+        body.insert("loudness".into(), serde_json::json!(l));
+    }
+    if let Some(s) = args.seed {
+        body.insert("seed".into(), serde_json::json!(s));
+    }
+    if let Some(g) = args.guidance_scale {
+        body.insert("guidance_scale".into(), serde_json::json!(g));
+    }
+    if args.enhance {
+        body.insert("should_enhance".into(), serde_json::Value::Bool(true));
+    }
+    if args.stream_previews {
+        body.insert("stream_previews".into(), serde_json::Value::Bool(true));
+    }
+    if let Some(q) = args.quality {
+        body.insert("quality".into(), serde_json::json!(q));
     }
 
     let resp: serde_json::Value = client
@@ -322,13 +463,14 @@ async fn design(
         )
         .await?;
 
+    // When stream_previews=true, the API returns only IDs (no audio bytes).
     let previews = resp
         .get("previews")
         .and_then(|p| p.as_array())
         .cloned()
         .unwrap_or_default();
 
-    let dir = output_dir.unwrap_or_else(|| ".".to_string());
+    let dir = args.output_dir.unwrap_or_else(|| ".".to_string());
     let ts = crate::commands::now_timestamp();
 
     let mut written: Vec<serde_json::Value> = Vec::new();
@@ -337,6 +479,12 @@ async fn design(
             continue;
         };
         let Some(b64) = preview.get("audio_base_64").and_then(|a| a.as_str()) else {
+            // stream_previews mode — no bytes, just list the id.
+            written.push(serde_json::json!({
+                "generated_voice_id": gen_id,
+                "file": null,
+                "bytes": 0,
+            }));
             continue;
         };
         let bytes = decode_base64(b64)?;
@@ -360,7 +508,8 @@ async fn design(
     }
 
     let result = serde_json::json!({
-        "description": description,
+        "description": args.description,
+        "model": args.model,
         "previews": written,
     });
 
@@ -368,10 +517,11 @@ async fn design(
         use owo_colors::OwoColorize;
         println!("{} generated {} previews:", "+".green(), written.len());
         for p in v["previews"].as_array().unwrap_or(&vec![]) {
+            let file = p["file"].as_str().unwrap_or("(stream-only)");
             println!(
                 "  {} {}",
                 p["generated_voice_id"].as_str().unwrap_or("").dimmed(),
-                p["file"].as_str().unwrap_or("").bold()
+                file.bold()
             );
         }
         println!(
@@ -416,7 +566,17 @@ async fn save_preview(
 
 // ── delete ─────────────────────────────────────────────────────────────────
 
-async fn delete(ctx: Ctx, client: &ElevenLabsClient, voice_id: &str) -> Result<(), AppError> {
+async fn delete(
+    ctx: Ctx,
+    client: &ElevenLabsClient,
+    voice_id: &str,
+    yes: bool,
+) -> Result<(), AppError> {
+    if !yes {
+        return Err(AppError::InvalidInput(format!(
+            "deleting '{voice_id}' is irreversible — pass --yes to confirm"
+        )));
+    }
     let path = format!("/v1/voices/{voice_id}");
     client.delete(&path).await?;
     let result = serde_json::json!({ "voice_id": voice_id, "deleted": true });

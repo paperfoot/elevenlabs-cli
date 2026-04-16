@@ -136,6 +136,29 @@ impl ElevenLabsClient {
         Ok(resp.bytes().await?)
     }
 
+    /// JSON POST with query params, returning JSON. Used by
+    /// `/v1/text-to-speech/{id}/with-timestamps` where the body is JSON, the
+    /// response is JSON, and `output_format`/`enable_logging` are query params.
+    pub async fn post_json_with_query<B: Serialize, Q: Serialize + ?Sized, T: DeserializeOwned>(
+        &self,
+        path: &str,
+        query: &Q,
+        body: &B,
+    ) -> Result<T, AppError> {
+        let resp = self
+            .http
+            .post(self.url(path))
+            .query(query)
+            .json(body)
+            .send()
+            .await?;
+        check_status(resp)
+            .await?
+            .json::<T>()
+            .await
+            .map_err(Into::into)
+    }
+
     // ── POST multipart (file uploads) ──────────────────────────────────────
 
     pub async fn post_multipart_json<T: DeserializeOwned>(
@@ -187,6 +210,27 @@ impl ElevenLabsClient {
         let resp = self
             .http
             .post(self.url(path))
+            .multipart(form)
+            .send()
+            .await?;
+        let resp = check_status(resp).await?;
+        Ok(resp.bytes().await?)
+    }
+
+    /// Multipart POST with query-string parameters. Needed by endpoints like
+    /// `/v1/speech-to-speech/{voice_id}` where `output_format`,
+    /// `enable_logging`, and `optimize_streaming_latency` are query params
+    /// even though the body is multipart.
+    pub async fn post_multipart_bytes_with_query<Q: Serialize + ?Sized>(
+        &self,
+        path: &str,
+        query: &Q,
+        form: reqwest::multipart::Form,
+    ) -> Result<bytes::Bytes, AppError> {
+        let resp = self
+            .http
+            .post(self.url(path))
+            .query(query)
             .multipart(form)
             .send()
             .await?;

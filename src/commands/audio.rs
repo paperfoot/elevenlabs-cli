@@ -1,4 +1,10 @@
 //! audio isolate / convert (speech-to-speech voice conversion)
+//!
+//! Grounded against:
+//!   - `BodyAudioIsolationV1AudioIsolationPost` for isolate (multipart)
+//!   - `BodySpeechToSpeechV1SpeechToSpeechVoiceIdPost` for convert (multipart,
+//!     with output_format / enable_logging / optimize_streaming_latency as
+//!     query params — matching the Fern-generated client).
 
 use serde::Serialize;
 use std::path::Path;
@@ -21,14 +27,54 @@ pub async fn dispatch(ctx: Ctx, action: AudioAction) -> Result<(), AppError> {
     let client = ElevenLabsClient::from_config(&cfg)?;
 
     match action {
-        AudioAction::Isolate { file, output } => isolate(ctx, &client, file, output).await,
+        AudioAction::Isolate {
+            file,
+            output,
+            pcm_16k,
+        } => isolate(ctx, &client, file, output, pcm_16k).await,
         AudioAction::Convert {
             file,
             voice_id,
             voice,
             model,
             output,
-        } => convert(ctx, &cfg, &client, file, voice_id, voice, model, output).await,
+            format,
+            stability,
+            similarity,
+            style,
+            speaker_boost,
+            speed,
+            seed,
+            remove_background_noise,
+            optimize_streaming_latency,
+            pcm_16k,
+            no_logging,
+        } => {
+            convert(
+                ctx,
+                &cfg,
+                &client,
+                ConvertArgs {
+                    file,
+                    voice_id,
+                    voice,
+                    model,
+                    output,
+                    format,
+                    stability,
+                    similarity,
+                    style,
+                    speaker_boost,
+                    speed,
+                    seed,
+                    remove_background_noise,
+                    optimize_streaming_latency,
+                    pcm_16k,
+                    no_logging,
+                },
+            )
+            .await
+        }
     }
 }
 
@@ -37,6 +83,7 @@ async fn isolate(
     client: &ElevenLabsClient,
     file: String,
     output: Option<String>,
+    pcm_16k: bool,
 ) -> Result<(), AppError> {
     let path = Path::new(&file);
     if !path.exists() {
@@ -56,7 +103,10 @@ async fn isolate(
         .file_name(filename)
         .mime_str(&mime)
         .map_err(|e| AppError::Http(format!("invalid mime '{mime}': {e}")))?;
-    let form = reqwest::multipart::Form::new().part("audio", file_part);
+    let mut form = reqwest::multipart::Form::new().part("audio", file_part);
+    if pcm_16k {
+        form = form.text("file_format", "pcm_s16le_16");
+    }
 
     let audio = client
         .post_multipart_bytes("/v1/audio-isolation", form)
@@ -85,18 +135,32 @@ async fn isolate(
     Ok(())
 }
 
-#[allow(clippy::too_many_arguments)]
-async fn convert(
-    ctx: Ctx,
-    cfg: &crate::config::AppConfig,
-    client: &ElevenLabsClient,
+struct ConvertArgs {
     file: String,
     voice_id: Option<String>,
     voice: Option<String>,
     model: Option<String>,
     output: Option<String>,
+    format: Option<String>,
+    stability: Option<f32>,
+    similarity: Option<f32>,
+    style: Option<f32>,
+    speaker_boost: Option<bool>,
+    speed: Option<f32>,
+    seed: Option<u32>,
+    remove_background_noise: bool,
+    optimize_streaming_latency: Option<u32>,
+    pcm_16k: bool,
+    no_logging: bool,
+}
+
+async fn convert(
+    ctx: Ctx,
+    cfg: &crate::config::AppConfig,
+    client: &ElevenLabsClient,
+    args: ConvertArgs,
 ) -> Result<(), AppError> {
-    let path = Path::new(&file);
+    let path = Path::new(&args.file);
     if !path.exists() {
         return Err(AppError::InvalidInput(format!(
             "file does not exist: {}",
@@ -104,15 +168,22 @@ async fn convert(
         )));
     }
 
-    let voice_id = if let Some(id) = voice_id {
+    let voice_id = if let Some(id) = args.voice_id {
         id
-    } else if let Some(name) = voice {
+    } else if let Some(name) = args.voice {
         resolve_voice_by_name(client, &name).await?
     } else {
         cfg.default_voice_id()
     };
 
-    let model_id = model.unwrap_or_else(|| "eleven_multilingual_sts_v2".to_string());
+    let model_id = args
+        .model
+        .unwrap_or_else(|| "eleven_multilingual_sts_v2".to_string());
+
+    let output_format = args
+        .format
+        .clone()
+        .unwrap_or_else(|| cfg.default_output_format());
 
     let bytes = crate::commands::read_file_bytes(path).await?;
     let mime = crate::commands::mime_for_path(path);
@@ -125,15 +196,60 @@ async fn convert(
         .mime_str(&mime)
         .map_err(|e| AppError::Http(format!("invalid mime '{mime}': {e}")))?;
 
-    let form = reqwest::multipart::Form::new()
+    let mut form = reqwest::multipart::Form::new()
         .text("model_id", model_id.clone())
         .part("audio", file_part);
 
+    // voice_settings is a JSON-stringified form field per the SDK schema.
+    let mut voice_settings = serde_json::Map::new();
+    if let Some(v) = args.stability {
+        voice_settings.insert("stability".into(), serde_json::json!(v));
+    }
+    if let Some(v) = args.similarity {
+        voice_settings.insert("similarity_boost".into(), serde_json::json!(v));
+    }
+    if let Some(v) = args.style {
+        voice_settings.insert("style".into(), serde_json::json!(v));
+    }
+    if let Some(v) = args.speaker_boost {
+        voice_settings.insert("use_speaker_boost".into(), serde_json::json!(v));
+    }
+    if let Some(v) = args.speed {
+        voice_settings.insert("speed".into(), serde_json::json!(v));
+    }
+    if !voice_settings.is_empty() {
+        let vs_json = serde_json::to_string(&serde_json::Value::Object(voice_settings))
+            .map_err(|e| AppError::Http(format!("serialize voice_settings: {e}")))?;
+        form = form.text("voice_settings", vs_json);
+    }
+    if let Some(seed) = args.seed {
+        form = form.text("seed", seed.to_string());
+    }
+    if args.remove_background_noise {
+        form = form.text("remove_background_noise", "true");
+    }
+    if args.pcm_16k {
+        form = form.text("file_format", "pcm_s16le_16");
+    }
+
+    // Query params per the Fern client: output_format, enable_logging,
+    // optimize_streaming_latency.
+    let mut query: Vec<(&str, String)> = vec![("output_format", output_format.clone())];
+    if args.no_logging {
+        query.push(("enable_logging", "false".to_string()));
+    }
+    if let Some(o) = args.optimize_streaming_latency {
+        query.push(("optimize_streaming_latency", o.to_string()));
+    }
+
     let url_path = format!("/v1/speech-to-speech/{voice_id}");
-    let audio = client.post_multipart_bytes(&url_path, form).await?;
+    let audio = client
+        .post_multipart_bytes_with_query(&url_path, &query, form)
+        .await?;
     let bytes_written = audio.len();
 
-    let out_path = crate::commands::resolve_output_path(output, "sts", "mp3");
+    let ext = crate::commands::tts::extension_for_format(&output_format);
+    let out_path = crate::commands::resolve_output_path(args.output, "sts", ext);
     tokio::fs::write(&out_path, &audio)
         .await
         .map_err(AppError::Io)?;
@@ -143,6 +259,7 @@ async fn convert(
         "output": out_path.display().to_string(),
         "voice_id": voice_id,
         "model_id": model_id,
+        "output_format": output_format,
         "bytes_written": bytes_written,
     });
     output::print_success_or(ctx, &result, |r| {

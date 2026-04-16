@@ -9,7 +9,9 @@ pub fn run() {
         "homepage": env!("CARGO_PKG_HOMEPAGE"),
         "commands": {
             "tts <text>": {
-                "description": "Convert text to speech. Writes an audio file.",
+                "description": "Convert text to speech. Writes an audio file. Supports streaming \
+                 (--stream routes to /stream endpoint) and per-character alignment JSON \
+                 (--with-timestamps routes to /with-timestamps endpoint).",
                 "aliases": ["speak"],
                 "options": [
                     "--voice-id <id>",
@@ -22,7 +24,20 @@ pub fn run() {
                     "--style <0-1>",
                     "--speed <0.7-1.2>",
                     "--language <iso>",
-                    "--stdout"
+                    "--stdout",
+                    "--stream",
+                    "--with-timestamps",
+                    "--save-timestamps <path>",
+                    "--seed <0-4294967295>",
+                    "--optimize-streaming-latency <0-4>",
+                    "--no-logging",
+                    "--previous-text <str>",
+                    "--next-text <str>",
+                    "--previous-request-id <id> (repeatable, max 3)",
+                    "--next-request-id <id> (repeatable, max 3)",
+                    "--apply-text-normalization <auto|on|off>",
+                    "--apply-language-text-normalization",
+                    "--use-pvc-as-ivc"
                 ]
             },
             "stt [file]": {
@@ -69,22 +84,29 @@ pub fn run() {
                 ]
             },
             "sfx <text>": {
-                "description": "Generate a sound effect from a text description.",
+                "description": "Generate a sound effect from a text description (0.5-30s).",
                 "aliases": ["sound"],
-                "options": ["--duration <sec>", "--prompt-influence <0-1>", "--loop", "--output <path>"]
+                "options": [
+                    "--duration <0.5-30>",
+                    "--prompt-influence <0-1>",
+                    "--loop",
+                    "--format <codec_rate_bitrate>",
+                    "--model <id>",
+                    "--output <path>"
+                ]
             },
-            "voices list": "List voices in your library",
+            "voices list": "List voices in your library. Supports --search, --sort, --direction, --limit, --show-legacy.",
             "voices show <voice_id>": "Get full details for a voice",
             "voices search <query>": "Search your voice library",
-            "voices library": "Search the public shared voice library",
+            "voices library": "Search the public shared voice library (1-indexed pagination). Filters: --search, --page, --page-size, --category, --gender, --age, --accent, --language, --locale, --use-case, --featured, --min-notice-days, --include-custom-rates, --include-live-moderated, --reader-app-enabled, --owner-id, --sort.",
             "voices clone <name> <files...>": "Instant voice clone (IVC) from samples",
-            "voices design <description>": "Generate voice previews from a text description",
+            "voices design <description>": "Generate voice previews from a text description. Supports --model {eleven_multilingual_ttv_v2|eleven_ttv_v3}, --seed, --loudness, --guidance-scale, --enhance, --stream-previews, --quality, --text, --output-dir.",
             "voices save-preview <generated_voice_id> <name> <description>": "Save a designed voice to your library",
-            "voices delete <voice_id>": "Delete a voice (aliases: rm)",
+            "voices delete <voice_id> --yes": "Delete a voice (aliases: rm). --yes is required because deletion is irreversible.",
             "models list": "List available models",
-            "audio isolate <file>": "Isolate speech from background",
-            "audio convert <file>": "Voice-to-voice conversion (speech-to-speech)",
-            "music compose <prompt>": "Compose music from a text prompt",
+            "audio isolate <file>": "Isolate speech from background. Supports --pcm-16k for raw 16-bit PCM input.",
+            "audio convert <file>": "Voice-to-voice conversion (speech-to-speech). Supports --format, --voice/--voice-id, --model, --stability/--similarity/--style/--speaker-boost/--speed (voice settings), --seed, --remove-background-noise, --optimize-streaming-latency, --pcm-16k, --no-logging.",
+            "music compose [prompt]": "Compose music from a text prompt. Length 3000-600000ms. Supports --composition-plan <file>, --force-instrumental, --seed, --model, --respect-sections-durations, --store-for-inpainting, --sign-with-c2pa.",
             "music plan <prompt>": "Create a composition plan (free)",
             "user info": "Basic user info",
             "user subscription": "Subscription tier, usage, and remaining characters",
@@ -97,7 +119,7 @@ pub fn run() {
             "conversations show <conversation_id>": "Get a conversation with transcript",
             "phone list": "List phone numbers",
             "phone call <agent_id>": "Place an outbound call via an agent",
-            "history list": "List generation history",
+            "history list": "List generation history. Filters: --start-after <id>, --voice-id, --model-id, --before <unix>, --after <unix>, --sort-direction {asc|desc}, --search, --source {TTS|STS}.",
             "history delete <id>": "Delete a history item",
             "agent-info": {
                 "description": "This manifest",
