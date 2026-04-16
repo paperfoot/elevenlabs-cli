@@ -156,6 +156,29 @@ impl ElevenLabsClient {
             .map_err(Into::into)
     }
 
+    /// Like `post_multipart_json` but also attaches query-string parameters.
+    /// Needed for endpoints like `/v1/speech-to-text` where `enable_logging`
+    /// is a query param even though the body is multipart.
+    pub async fn post_multipart_json_with_query<T: DeserializeOwned, Q: Serialize + ?Sized>(
+        &self,
+        path: &str,
+        query: &Q,
+        form: reqwest::multipart::Form,
+    ) -> Result<T, AppError> {
+        let resp = self
+            .http
+            .post(self.url(path))
+            .query(query)
+            .multipart(form)
+            .send()
+            .await?;
+        check_status(resp)
+            .await?
+            .json::<T>()
+            .await
+            .map_err(Into::into)
+    }
+
     pub async fn post_multipart_bytes(
         &self,
         path: &str,

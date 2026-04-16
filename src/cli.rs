@@ -34,7 +34,7 @@ pub enum Commands {
 
     /// Transcribe an audio file to text
     #[command(visible_alias = "transcribe")]
-    Stt(SttArgs),
+    Stt(Box<SttArgs>),
 
     /// Generate a sound effect from a text description
     #[command(visible_alias = "sound")]
@@ -189,32 +189,164 @@ pub struct TtsArgs {
 
 #[derive(clap::Args, Debug, Clone)]
 pub struct SttArgs {
-    /// Input audio file path
-    pub file: String,
+    /// Input audio/video file path. Omit when using --from-url or --source-url.
+    pub file: Option<String>,
 
-    /// Output text file (defaults to stdout)
+    /// HTTPS URL to audio/video (S3/GCS/R2/CDN/pre-signed). Mutually exclusive with <FILE>/--source-url.
+    #[arg(long, value_name = "URL", conflicts_with_all = ["file", "source_url"])]
+    pub from_url: Option<String>,
+
+    /// Hosted video URL (YouTube, TikTok, etc). Mutually exclusive with <FILE>/--from-url.
+    #[arg(long, value_name = "URL", conflicts_with_all = ["file", "from_url"])]
+    pub source_url: Option<String>,
+
+    /// Output text file for the transcript. When absent, the transcript is printed.
     #[arg(short, long)]
     pub output: Option<String>,
 
-    /// Model ID (scribe_v1 or scribe_v1_experimental)
-    #[arg(long, default_value = "scribe_v1")]
+    /// Save the full JSON response (words, characters, entities, ...) to a file.
+    #[arg(long, value_name = "PATH")]
+    pub save_raw: Option<String>,
+
+    /// Save just the word-timing array as JSON (for lyric/subtitle pipelines).
+    #[arg(long, value_name = "PATH")]
+    pub save_words: Option<String>,
+
+    // ── Model / language ───────────────────────────────────────────────────
+    /// Model ID. Default scribe_v2 (best accuracy); scribe_v1 for legacy.
+    #[arg(long, default_value = "scribe_v2", value_parser = ["scribe_v2", "scribe_v1"])]
     pub model: String,
 
-    /// ISO 639-3 language code (auto-detect when omitted)
+    /// ISO 639-1 or ISO 639-3 language code (auto-detect when omitted).
     #[arg(long)]
     pub language: Option<String>,
 
-    /// Enable speaker diarization
+    // ── Timestamps ─────────────────────────────────────────────────────────
+    /// Timestamp granularity. 'character' gives per-character start/end — ideal for
+    /// karaoke/lyric sync. Values: none | word | character. Default word.
+    #[arg(long, default_value = "word", value_parser = ["none", "word", "character"])]
+    pub timestamps: String,
+
+    // ── Diarization ────────────────────────────────────────────────────────
+    /// Annotate which speaker is talking.
     #[arg(long)]
     pub diarize: bool,
 
-    /// Include word-level timestamps
-    #[arg(long)]
-    pub timestamps: bool,
+    /// Max speakers expected (1-32). Helps diarization accuracy.
+    #[arg(long, value_parser = clap::value_parser!(u32).range(1..=32))]
+    pub num_speakers: Option<u32>,
 
-    /// Tag non-speech audio events
+    /// Diarization threshold 0.0-1.0. Higher = fewer predicted speakers. Requires --diarize and
+    /// conflicts with --num-speakers.
+    #[arg(long, value_name = "FLOAT")]
+    pub diarization_threshold: Option<f32>,
+
+    /// Auto-label speakers as agent vs customer. Requires --diarize.
     #[arg(long)]
+    pub detect_speaker_roles: bool,
+
+    // ── Audio-event tagging / verbatim ─────────────────────────────────────
+    /// Disable tagging of non-speech audio events (default: tagging is on).
+    #[arg(long)]
+    pub no_audio_events: bool,
+
+    /// Explicitly enable audio-event tagging (on by default; flag is for clarity).
+    #[arg(long, conflicts_with = "no_audio_events")]
     pub audio_events: bool,
+
+    /// Remove filler words and non-speech sounds (scribe_v2 only).
+    #[arg(long)]
+    pub no_verbatim: bool,
+
+    // ── Multi-channel / raw PCM ────────────────────────────────────────────
+    /// Transcribe each channel independently (e.g. stereo call: agent L / customer R, max 5).
+    #[arg(long)]
+    pub multi_channel: bool,
+
+    /// Declare input is raw 16-bit PCM mono @ 16 kHz little-endian (lower latency).
+    #[arg(long)]
+    pub pcm_16k: bool,
+
+    // ── Determinism ────────────────────────────────────────────────────────
+    /// Sampling temperature 0.0-2.0. Lower = more deterministic.
+    #[arg(long, value_name = "FLOAT")]
+    pub temperature: Option<f32>,
+
+    /// Seed for deterministic sampling (0 to 2_147_483_647).
+    #[arg(long, value_parser = clap::value_parser!(u32).range(0..=2_147_483_647))]
+    pub seed: Option<u32>,
+
+    // ── Biasing / keyterms ─────────────────────────────────────────────────
+    /// Keyterm to bias transcription toward. Repeatable; max 1000; <=50 chars each; ≤5 words
+    /// after normalisation. Adds 20% cost surcharge.
+    #[arg(long = "keyterm", value_name = "WORD")]
+    pub keyterms: Vec<String>,
+
+    // ── Entity detection / redaction (PII) ─────────────────────────────────
+    /// Detect entities. Values: all | pii | phi | pci | other | offensive_language | <specific-type>.
+    /// Repeatable. Adds 30% cost surcharge.
+    #[arg(long = "detect-entities", value_name = "TYPE")]
+    pub detect_entities: Vec<String>,
+
+    /// Redact detected entities (must be a subset of --detect-entities). Repeatable. 30% surcharge.
+    #[arg(long = "redact-entities", value_name = "TYPE")]
+    pub redact_entities: Vec<String>,
+
+    /// Redaction format for the text. Values: redacted | entity_type | enumerated_entity_type.
+    #[arg(long, value_parser = ["redacted", "entity_type", "enumerated_entity_type"])]
+    pub redaction_mode: Option<String>,
+
+    // ── Additional export formats (SRT, segmented_json, ...) ───────────────
+    /// Export format in addition to the JSON transcript. Repeatable.
+    /// Values: srt | txt | segmented_json | docx | pdf | html.
+    #[arg(long = "format", value_name = "FMT", value_parser = ["srt", "txt", "segmented_json", "docx", "pdf", "html"])]
+    pub formats: Vec<String>,
+
+    /// Include speaker labels in exported formats.
+    #[arg(long)]
+    pub format_include_speakers: bool,
+
+    /// Include timestamps in exported formats.
+    #[arg(long)]
+    pub format_include_timestamps: bool,
+
+    /// Segment exported text on silence longer than N seconds.
+    #[arg(long, value_name = "SECONDS")]
+    pub format_segment_on_silence: Option<f32>,
+
+    /// Maximum segment duration in seconds for exported formats.
+    #[arg(long, value_name = "SECONDS")]
+    pub format_max_segment_duration: Option<f32>,
+
+    /// Maximum characters per segment for exported formats.
+    #[arg(long)]
+    pub format_max_segment_chars: Option<u32>,
+
+    /// Maximum characters per line (SRT/TXT only).
+    #[arg(long)]
+    pub format_max_chars_per_line: Option<u32>,
+
+    /// Directory to save exported format files (defaults to CWD).
+    #[arg(long, value_name = "DIR")]
+    pub format_out_dir: Option<String>,
+
+    // ── Privacy / ZRM ──────────────────────────────────────────────────────
+    /// Zero-retention mode (enterprise only). Disables log/transcript storage.
+    #[arg(long)]
+    pub no_logging: bool,
+
+    // ── Webhooks (async) ───────────────────────────────────────────────────
+    /// Send result to configured webhooks asynchronously; command returns early.
+    #[arg(long)]
+    pub webhook: bool,
+
+    /// Specific webhook ID to receive the result (requires --webhook).
+    #[arg(long)]
+    pub webhook_id: Option<String>,
+
+    /// JSON metadata passed through to the webhook (max 16 KB, depth 2).
+    #[arg(long, value_name = "JSON")]
+    pub webhook_metadata: Option<String>,
 }
 
 // ── SFX ────────────────────────────────────────────────────────────────────

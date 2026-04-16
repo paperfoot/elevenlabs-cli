@@ -50,7 +50,7 @@ fn advertises_core_tts_commands() {
     let info = agent_info();
     let commands = info["commands"].as_object().unwrap();
     assert!(commands.contains_key("tts <text>"), "missing tts");
-    assert!(commands.contains_key("stt <file>"), "missing stt");
+    assert!(commands.contains_key("stt [file]"), "missing stt");
     assert!(commands.contains_key("sfx <text>"), "missing sfx");
 }
 

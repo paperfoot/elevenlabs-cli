@@ -100,7 +100,7 @@ fn main() {
 
             // Domain commands
             Commands::Tts(args) => commands::tts::run(ctx, args).await,
-            Commands::Stt(args) => commands::stt::run(ctx, args).await,
+            Commands::Stt(args) => commands::stt::run(ctx, *args).await,
             Commands::Sfx(args) => commands::sfx::run(ctx, args).await,
             Commands::Voices { action } => commands::voices::dispatch(ctx, action).await,
             Commands::Models { action } => commands::models::dispatch(ctx, action).await,

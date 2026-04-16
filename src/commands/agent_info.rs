@@ -25,10 +25,48 @@ pub fn run() {
                     "--stdout"
                 ]
             },
-            "stt <file>": {
-                "description": "Transcribe an audio file (scribe_v1 by default).",
+            "stt [file]": {
+                "description": "Transcribe audio (scribe_v2 by default). Supports local files, HTTPS URLs, \
+                 hosted videos (YouTube/TikTok), character-level timestamps, diarization, entity \
+                 redaction, biasing keyterms, and SRT/TXT/DOCX/PDF/HTML export.",
                 "aliases": ["transcribe"],
-                "options": ["--output <path>", "--language <iso>", "--diarize", "--timestamps", "--audio-events"]
+                "options": [
+                    "--output <path>",
+                    "--save-raw <path>",
+                    "--save-words <path>",
+                    "--from-url <url>",
+                    "--source-url <url>",
+                    "--model <scribe_v2|scribe_v1>",
+                    "--language <iso>",
+                    "--timestamps <none|word|character>",
+                    "--diarize",
+                    "--num-speakers <1-32>",
+                    "--diarization-threshold <0-1>",
+                    "--detect-speaker-roles",
+                    "--audio-events",
+                    "--no-audio-events",
+                    "--no-verbatim",
+                    "--multi-channel",
+                    "--pcm-16k",
+                    "--temperature <0-2>",
+                    "--seed <n>",
+                    "--keyterm <word> (repeatable)",
+                    "--detect-entities <type> (repeatable)",
+                    "--redact-entities <type> (repeatable)",
+                    "--redaction-mode <redacted|entity_type|enumerated_entity_type>",
+                    "--format <srt|txt|segmented_json|docx|pdf|html> (repeatable)",
+                    "--format-include-speakers",
+                    "--format-include-timestamps",
+                    "--format-segment-on-silence <s>",
+                    "--format-max-segment-duration <s>",
+                    "--format-max-segment-chars <n>",
+                    "--format-max-chars-per-line <n>",
+                    "--format-out-dir <dir>",
+                    "--no-logging",
+                    "--webhook",
+                    "--webhook-id <id>",
+                    "--webhook-metadata <json>"
+                ]
             },
             "sfx <text>": {
                 "description": "Generate a sound effect from a text description.",
