@@ -15,7 +15,7 @@ pub const DEFAULT_BASE_URL: &str = "https://api.elevenlabs.io";
 pub const USER_AGENT: &str = concat!(
     "elevenlabs-cli/",
     env!("CARGO_PKG_VERSION"),
-    " (+https://github.com/199-biotechnologies/elevenlabs-cli)"
+    " (+https://github.com/paperfoot/elevenlabs-cli)"
 );
 
 #[derive(Clone)]

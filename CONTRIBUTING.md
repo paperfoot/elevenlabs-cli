@@ -9,14 +9,14 @@ If you're an AI agent (Claude, Codex, Gemini, Cursor, etc.), read
 ## TL;DR
 
 ```bash
-git clone https://github.com/199-biotechnologies/elevenlabs-cli
+git clone https://github.com/paperfoot/elevenlabs-cli
 cd elevenlabs-cli
 cargo build --release
 cargo test
 ./target/release/elevenlabs agent-info | jq .
 ```
 
-- Open **issues** at <https://github.com/199-biotechnologies/elevenlabs-cli/issues>
+- Open **issues** at <https://github.com/paperfoot/elevenlabs-cli/issues>
   for bugs, feature requests, and questions.
 - Open **pull requests** against `main` with a clear title and a
   body that describes *what* changed and *why*.

@@ -17,8 +17,8 @@ checkout — future agents and humans have no way to benefit from them.
 
 | Artifact | Destination |
 |---|---|
-| Code changes | **Pull requests** against `main` on <https://github.com/199-biotechnologies/elevenlabs-cli> |
-| Bug reports | **Issues** on <https://github.com/199-biotechnologies/elevenlabs-cli/issues> |
+| Code changes | **Pull requests** against `main` on <https://github.com/paperfoot/elevenlabs-cli> |
+| Bug reports | **Issues** on <https://github.com/paperfoot/elevenlabs-cli/issues> |
 | Feature proposals | Issues first, PR after discussion |
 | Security issues | Private: `security@199bio.com` (do **not** open a public issue) |
 | Homebrew formula updates | PR against <https://github.com/199-biotechnologies/homebrew-tap> (`Formula/elevenlabs.rb`) |
@@ -250,7 +250,7 @@ discussion before writing code.
 
 ## How to reach a human
 
-- Open an issue at <https://github.com/199-biotechnologies/elevenlabs-cli/issues>.
+- Open an issue at <https://github.com/paperfoot/elevenlabs-cli/issues>.
 - For security disclosures: `security@199bio.com`.
 - The maintainer account is `@longevityboris` on GitHub and X.
 

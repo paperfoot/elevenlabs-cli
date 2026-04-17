@@ -8,13 +8,13 @@
 
 TTS • STT • Sound Effects • Voice Cloning • Voice Design • Conversational Agents • Music Generation • Phone Calls — all from your terminal, all machine-readable.
 
-[![Star this repo](https://img.shields.io/github/stars/199-biotechnologies/elevenlabs-cli?style=for-the-badge&logo=github&label=%E2%AD%90%20Star%20this%20repo&color=yellow)](https://github.com/199-biotechnologies/elevenlabs-cli/stargazers)
+[![Star this repo](https://img.shields.io/github/stars/paperfoot/elevenlabs-cli?style=for-the-badge&logo=github&label=%E2%AD%90%20Star%20this%20repo&color=yellow)](https://github.com/paperfoot/elevenlabs-cli/stargazers)
 &nbsp;
 [![Follow @longevityboris](https://img.shields.io/badge/Follow_%40longevityboris-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/longevityboris)
 
 [![crates.io](https://img.shields.io/crates/v/elevenlabs?style=for-the-badge&logo=rust&color=orange)](https://crates.io/crates/elevenlabs)
 [![Downloads](https://img.shields.io/crates/d/elevenlabs?style=for-the-badge&logo=rust&color=orange)](https://crates.io/crates/elevenlabs)
-[![CI](https://img.shields.io/github/actions/workflow/status/199-biotechnologies/elevenlabs-cli/ci.yml?style=for-the-badge&logo=github-actions&label=CI)](https://github.com/199-biotechnologies/elevenlabs-cli/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/paperfoot/elevenlabs-cli/ci.yml?style=for-the-badge&logo=github-actions&label=CI)](https://github.com/paperfoot/elevenlabs-cli/actions/workflows/ci.yml)
 [![MIT License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![MSRV 1.85+](https://img.shields.io/badge/MSRV-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](#contributing)
@@ -60,7 +60,7 @@ brew tap 199-biotechnologies/tap
 brew install elevenlabs
 
 # Prebuilt binaries — Linux, macOS (x86_64 + arm64), Windows
-curl -L https://github.com/199-biotechnologies/elevenlabs-cli/releases/latest/download/elevenlabs-$(uname -s)-$(uname -m).tar.gz | tar xz
+curl -L https://github.com/paperfoot/elevenlabs-cli/releases/latest/download/elevenlabs-$(uname -s)-$(uname -m).tar.gz | tar xz
 sudo mv elevenlabs /usr/local/bin/
 ```
 
@@ -451,7 +451,7 @@ Secrets are masked in `config show`. The config file is chmod `0600` on Unix.
 ## Building from source
 
 ```bash
-git clone https://github.com/199-biotechnologies/elevenlabs-cli
+git clone https://github.com/paperfoot/elevenlabs-cli
 cd elevenlabs-cli
 cargo build --release
 ./target/release/elevenlabs --version
@@ -480,7 +480,7 @@ Built by [Boris Djordjevic](https://github.com/longevityboris) at [199 Biotechno
 
 **If this saves you context or setup time:**
 
-[![Star this repo](https://img.shields.io/github/stars/199-biotechnologies/elevenlabs-cli?style=for-the-badge&logo=github&label=%E2%AD%90%20Star%20this%20repo&color=yellow)](https://github.com/199-biotechnologies/elevenlabs-cli/stargazers)
+[![Star this repo](https://img.shields.io/github/stars/paperfoot/elevenlabs-cli?style=for-the-badge&logo=github&label=%E2%AD%90%20Star%20this%20repo&color=yellow)](https://github.com/paperfoot/elevenlabs-cli/stargazers)
 &nbsp;
 [![Follow @longevityboris](https://img.shields.io/badge/Follow_%40longevityboris-000000?style=for-the-badge&logo=x&logoColor=white)](https://x.com/longevityboris)
 
