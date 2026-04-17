@@ -11,19 +11,35 @@ use crate::output::{self, Ctx};
 
 #[derive(Serialize)]
 struct MaskedConfig<'a> {
+    /// The key that ships on the wire (env wins over file).
     api_key: String,
+    /// Where that key came from: "ELEVENLABS_API_KEY env var" | "config file" | "(unset)".
+    api_key_source: String,
+    /// The key saved in config.toml, masked, even when an env var is shadowing it.
+    /// `null` if no file key is stored.
+    api_key_file: Option<String>,
+    /// True when env var and file both set but differ — silent auth breakage risk.
+    env_shadows_file: bool,
     defaults: &'a config::Defaults,
     update: &'a config::UpdateConfig,
     path: String,
 }
 
 pub fn show(ctx: Ctx, cfg: &AppConfig) -> Result<(), AppError> {
+    let state = cfg.auth_key_state();
+    let effective_key = state
+        .effective_key()
+        .map(config::mask_secret)
+        .unwrap_or_else(|| "(not set)".into());
+    let source_label = state.effective_source().label().to_string();
+    let file_masked = state.file_key.as_deref().map(config::mask_secret);
+    let shadow = state.env_shadows_file();
+
     let masked = MaskedConfig {
-        api_key: cfg
-            .api_key
-            .as_deref()
-            .map(config::mask_secret)
-            .unwrap_or_else(|| "(not set)".into()),
+        api_key: effective_key,
+        api_key_source: source_label,
+        api_key_file: file_masked,
+        env_shadows_file: shadow,
         defaults: &cfg.defaults,
         update: &cfg.update,
         path: config::config_path().display().to_string(),
@@ -33,7 +49,23 @@ pub fn show(ctx: Ctx, cfg: &AppConfig) -> Result<(), AppError> {
         use owo_colors::OwoColorize;
         println!("{}", "ElevenLabs CLI config".bold());
         println!("  {} {}", "path:".dimmed(), m.path);
-        println!("  {} {}", "api_key:".dimmed(), m.api_key);
+        println!(
+            "  {} {} (from {})",
+            "api_key:".dimmed(),
+            m.api_key,
+            m.api_key_source
+        );
+        if let Some(file_masked) = &m.api_key_file {
+            if m.env_shadows_file {
+                println!("  {} {}", "saved:".dimmed(), file_masked);
+                println!(
+                    "  {} {} — env var overrides the saved file. To use the \
+                     saved key instead, run: unset ELEVENLABS_API_KEY",
+                    "warn:".yellow().bold(),
+                    "env shadow".yellow()
+                );
+            }
+        }
         if let Some(v) = &m.defaults.voice_id {
             println!("  {} {}", "voice_id:".dimmed(), v);
         }
@@ -175,19 +207,51 @@ pub fn init(ctx: Ctx, api_key: Option<String>) -> Result<(), AppError> {
                 .into(),
         )
     })?;
+    let api_key = api_key.trim().to_string();
 
+    // Write the file directly to avoid `config::load()`'s env-var overlay
+    // smuggling a stale env value back into what we serialise.
     let mut cfg = config::load().unwrap_or_default();
-    cfg.api_key = Some(api_key.trim().to_string());
+    cfg.api_key = Some(api_key.clone());
     let path = config::save(&cfg)?;
+
+    // Detect env-shadow situation so we can warn loudly — this is the #1
+    // reason "the CLI saved my key but auth still fails".
+    let env_key = std::env::var("ELEVENLABS_API_KEY")
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    let env_shadows_file = match env_key.as_deref() {
+        Some(env) => env != api_key,
+        None => false,
+    };
 
     let result = serde_json::json!({
         "saved": true,
         "path": path.display().to_string(),
-        "api_key": config::mask_secret(cfg.api_key.as_deref().unwrap_or("")),
+        "api_key": config::mask_secret(&api_key),
+        "env_shadows_file": env_shadows_file,
+        "env_api_key": env_key.as_deref().map(config::mask_secret),
     });
     output::print_success_or(ctx, &result, |_| {
         use owo_colors::OwoColorize;
         println!("{} wrote config to {}", "+".green(), path.display());
+        if env_shadows_file {
+            println!(
+                "  {} {} is set in your environment to a DIFFERENT value ({}).",
+                "warn:".yellow().bold(),
+                "ELEVENLABS_API_KEY".yellow(),
+                env_key
+                    .as_deref()
+                    .map(config::mask_secret)
+                    .unwrap_or_default()
+            );
+            println!(
+                "  env vars win over the config file, so the saved key will be ignored \
+                 unless you update the env var or unset it."
+            );
+            println!("  fix: {}", "unset ELEVENLABS_API_KEY".bold());
+        }
         println!(
             "  run {} to verify the key works",
             "elevenlabs config check".bold()

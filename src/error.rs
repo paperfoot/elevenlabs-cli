@@ -79,12 +79,18 @@ impl AppError {
             Self::AuthFailed(msg) => {
                 // Surface missing-scope errors verbatim so agents know what to grant.
                 if msg.contains("permission") || msg.contains("missing") {
-                    format!("API key is missing a required permission. {msg}")
-                } else {
-                    "API key is invalid. Re-issue via https://elevenlabs.io/app/settings/api-keys \
-                     and run: elevenlabs config init --api-key <sk_...>"
-                        .into()
+                    return format!("API key is missing a required permission. {msg}");
                 }
+                // The #1 way auth silently fails: ELEVENLABS_API_KEY is set in
+                // the environment to a value that differs from the saved
+                // config.toml. The env always wins, so `elevenlabs config init`
+                // appears to do nothing. Detect and explain.
+                if let Some(hint) = env_shadow_hint() {
+                    return hint;
+                }
+                "API key is invalid. Re-issue via https://elevenlabs.io/app/settings/api-keys \
+                 and run: elevenlabs config init --api-key <sk_...>"
+                    .into()
             }
             Self::RateLimited(_) => "Wait a moment and retry the command".into(),
             Self::Api { status, .. } if *status == 429 => {
@@ -100,6 +106,43 @@ impl AppError {
             Self::Update(_) => "Retry later, or run: cargo install elevenlabs".into(),
         }
     }
+}
+
+/// If `ELEVENLABS_API_KEY` is set AND the saved config.toml has a different
+/// `api_key`, return a tailored remediation. Env wins over file, so this
+/// situation looks like "the CLI saved my key but auth still fails" unless we
+/// surface it. Mask both values when showing them.
+fn env_shadow_hint() -> Option<String> {
+    let env_key = std::env::var("ELEVENLABS_API_KEY")
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())?;
+    let file_key = read_file_api_key()?;
+    if env_key == file_key {
+        return None;
+    }
+    Some(format!(
+        "ELEVENLABS_API_KEY ({}) is set in your environment and overrides the saved \
+         config.toml ({}). The env var value is what was sent and it's invalid. \
+         Fix by either: (1) unset ELEVENLABS_API_KEY (the saved file value will take over), \
+         or (2) re-issue a new key and run: elevenlabs config init --api-key <sk_...>",
+        crate::config::mask_secret(&env_key),
+        crate::config::mask_secret(&file_key),
+    ))
+}
+
+/// Read `api_key` straight from the on-disk TOML file without the env-var
+/// overlay that `config::load()` applies — we need the raw file value to
+/// compare against the env value and detect shadowing.
+fn read_file_api_key() -> Option<String> {
+    let path = crate::config::config_path();
+    let text = std::fs::read_to_string(&path).ok()?;
+    let parsed: toml::Value = toml::from_str(&text).ok()?;
+    parsed
+        .get("api_key")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
 }
 
 // Allow `?` on reqwest errors in async paths.

@@ -62,6 +62,100 @@ impl Default for UpdateConfig {
     }
 }
 
+/// Where the effective API key came from. Surfaced in `config show` and in
+/// auth-error suggestions so users know which source to edit.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AuthSource {
+    /// ELEVENLABS_API_KEY environment variable.
+    Env,
+    /// `api_key` in config.toml.
+    File,
+    /// No key available anywhere.
+    None,
+}
+
+impl AuthSource {
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Env => "ELEVENLABS_API_KEY env var",
+            Self::File => "config file",
+            Self::None => "(unset)",
+        }
+    }
+}
+
+/// Snapshot of every API-key source, for diagnostic output. The CLI consults
+/// this when the user runs `config show`, when `config init` saves a new key,
+/// and when an auth call fails — so the "env var silently shadows the file"
+/// case gets surfaced instead of producing a generic "invalid key" error.
+#[derive(Debug, Clone)]
+pub struct AuthKeyState {
+    /// Raw value of `ELEVENLABS_API_KEY` (trimmed), if set and non-empty.
+    pub env_key: Option<String>,
+    /// Raw `api_key` from config.toml (trimmed), if present and non-empty.
+    pub file_key: Option<String>,
+}
+
+impl AuthKeyState {
+    /// Read the current state from the environment and the given loaded
+    /// config. The config loader pre-populates `api_key` with the env value
+    /// when set, so we re-read the env directly to distinguish the two.
+    pub fn snapshot(file_key_from_config: Option<&str>) -> Self {
+        let env_key = std::env::var("ELEVENLABS_API_KEY")
+            .ok()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+        // `config::load()` overwrites `cfg.api_key` with the env value when the
+        // env is set; re-read the raw TOML file directly so we can report the
+        // two sources independently.
+        let file_key = read_file_api_key().or_else(|| file_key_from_config.map(String::from));
+        Self {
+            env_key,
+            file_key: file_key.filter(|s| !s.trim().is_empty()),
+        }
+    }
+
+    /// Which source is being used for auth right now.
+    pub fn effective_source(&self) -> AuthSource {
+        if self.env_key.is_some() {
+            AuthSource::Env
+        } else if self.file_key.is_some() {
+            AuthSource::File
+        } else {
+            AuthSource::None
+        }
+    }
+
+    /// The value that actually ships on the wire (env wins over file).
+    pub fn effective_key(&self) -> Option<&str> {
+        self.env_key.as_deref().or(self.file_key.as_deref())
+    }
+
+    /// True iff the env var and file hold different non-empty values.
+    /// This is the case that silently breaks auth: the env is stale/invalid
+    /// and the user's saved-config key is ignored.
+    pub fn env_shadows_file(&self) -> bool {
+        matches!(
+            (&self.env_key, &self.file_key),
+            (Some(e), Some(f)) if e.trim() != f.trim()
+        )
+    }
+}
+
+/// Parse just the `api_key` field from the on-disk TOML config. Unlike
+/// `load()` this does NOT fold in the env var — we need the file value
+/// independently to detect the env-shadow case.
+fn read_file_api_key() -> Option<String> {
+    let path = config_path();
+    let text = std::fs::read_to_string(&path).ok()?;
+    let parsed: toml::Value = toml::from_str(&text).ok()?;
+    parsed
+        .get("api_key")
+        .and_then(|v| v.as_str())
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
 impl AppConfig {
     /// Resolve the API key with the documented precedence: environment
     /// variables win over the config file, which wins over (nothing).
@@ -88,6 +182,11 @@ impl AppConfig {
             }
         }
         None
+    }
+
+    /// Build a full snapshot of where keys are and which one wins.
+    pub fn auth_key_state(&self) -> AuthKeyState {
+        AuthKeyState::snapshot(self.api_key.as_deref())
     }
 
     /// Voice ID to use if none specified. Falls back to a built-in default.
