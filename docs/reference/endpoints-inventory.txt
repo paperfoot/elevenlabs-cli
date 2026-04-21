@@ -1,0 +1,280 @@
+GET     /docs                                                                                      [] redirect_to_mintlify  — Redirect To Mintlify
+POST    /v1/audio-isolation                                                                        [audio-isolation] audio_isolation  — Audio Isolation
+POST    /v1/audio-isolation/stream                                                                 [audio-isolation] audio_isolation_stream  — Audio Isolation Stream
+POST    /v1/audio-native                                                                           [audio-native] create_audio_native_project  — Creates Audio Native Enabled Project.
+POST    /v1/audio-native/content                                                                   [audio-native] audio_native_update_content_from_url  — Update Audio-Native Content From Url
+POST    /v1/audio-native/{project_id}/content                                                      [audio-native] audio_native_project_update_content_endpoint  — Update Audio-Native Project Content
+GET     /v1/audio-native/{project_id}/settings                                                     [audio-native] get_audio_native_project_settings_endpoint  — Get Audio Native Project Settings
+GET     /v1/convai/agent-testing                                                                   [] list_chat_response_tests_route  — List Agent Response Tests
+POST    /v1/convai/agent-testing/bulk-move                                                         [Agents Platform] agent_testing_bulk_move_route  — Bulk Move Tests To Folder
+POST    /v1/convai/agent-testing/create                                                            [] create_agent_response_test_route  — Create Agent Response Test
+POST    /v1/convai/agent-testing/folders                                                           [Agents Platform] create_agent_test_folder_route  — Create Agent Test Folder
+GET     /v1/convai/agent-testing/folders/{folder_id}                                               [Agents Platform] get_agent_test_folder_route  — Get Agent Test Folder By Id
+PATCH   /v1/convai/agent-testing/folders/{folder_id}                                               [Agents Platform] update_agent_test_folder_route  — Update Agent Test Folder
+DELETE  /v1/convai/agent-testing/folders/{folder_id}                                               [Agents Platform] delete_agent_test_folder_route  — Delete Agent Test Folder
+POST    /v1/convai/agent-testing/summaries                                                         [] get_agent_response_tests_summaries_route  — Get Agent Response Test Summaries By Ids
+GET     /v1/convai/agent-testing/{test_id}                                                         [] get_agent_response_test_route  — Get Agent Response Test By Id
+PUT     /v1/convai/agent-testing/{test_id}                                                         [] update_agent_response_test_route  — Update Agent Response Test
+DELETE  /v1/convai/agent-testing/{test_id}                                                         [] delete_chat_response_test_route  — Delete Agent Response Test
+GET     /v1/convai/agent/{agent_id}/knowledge-base/size                                            [Agents Platform] get_agent_knowledge_base_size  — Returns The Size Of The Agent'S Knowledge Base
+POST    /v1/convai/agent/{agent_id}/llm-usage/calculate                                            [Agents Platform] get_agent_llm_expected_cost_calculation  — Calculate Expected Llm Usage For An Agent
+GET     /v1/convai/agents                                                                          [Agents Platform] get_agents_route  — List Agents
+POST    /v1/convai/agents/create                                                                   [Agents Platform] create_agent_route  — Create Agent
+GET     /v1/convai/agents/summaries                                                                [Agents Platform] get_agent_summaries_route  — Get Agent Summaries
+GET     /v1/convai/agents/{agent_id}                                                               [Agents Platform] get_agent_route  — Get Agent
+PATCH   /v1/convai/agents/{agent_id}                                                               [Agents Platform] patch_agent_settings_route  — Patches An Agent Settings
+DELETE  /v1/convai/agents/{agent_id}                                                               [Agents Platform] delete_agent_route  — Delete Agent
+POST    /v1/convai/agents/{agent_id}/avatar                                                        [Agents Platform] post_agent_avatar_route  — Post Agent Avatar
+POST    /v1/convai/agents/{agent_id}/branches                                                      [Agents Platform] create_branch_route  — Create A New Branch
+GET     /v1/convai/agents/{agent_id}/branches                                                      [Agents Platform] get_branches_route  — List Agent Branches
+GET     /v1/convai/agents/{agent_id}/branches/{branch_id}                                          [Agents Platform] get_branch_route  — Get Agent Branch
+PATCH   /v1/convai/agents/{agent_id}/branches/{branch_id}                                          [Agents Platform] update_branch_route  — Update Agent Branch
+POST    /v1/convai/agents/{agent_id}/branches/{source_branch_id}/merge                             [Agents Platform] merge_branch_into_target  — Merge A Branch Into A Target Branch
+POST    /v1/convai/agents/{agent_id}/deployments                                                   [Agents Platform] create_agent_deployment_route  — Create Or Update Deployments
+POST    /v1/convai/agents/{agent_id}/drafts                                                        [Agents Platform] create_agent_draft_route  — Create Agent Draft
+DELETE  /v1/convai/agents/{agent_id}/drafts                                                        [Agents Platform] delete_agent_draft_route  — Delete Agent Draft
+POST    /v1/convai/agents/{agent_id}/duplicate                                                     [Agents Platform] duplicate_agent_route  — Duplicate Agent
+GET     /v1/convai/agents/{agent_id}/link                                                          [Agents Platform] get_agent_link_route  — Get Shareable Agent Link
+POST    /v1/convai/agents/{agent_id}/run-tests                                                     [] run_agent_test_suite_route  — Run Tests On The Agent
+POST    /v1/convai/agents/{agent_id}/simulate-conversation                                         [Agents Platform] run_conversation_simulation_route  — Simulates A Conversation
+POST    /v1/convai/agents/{agent_id}/simulate-conversation/stream                                  [Agents Platform] run_conversation_simulation_route_stream  — Simulates A Conversation (Stream)
+GET     /v1/convai/agents/{agent_id}/topics                                                        [Agents Insights] get_agent_topics_route  — Get Agent Conversation Topics
+GET     /v1/convai/agents/{agent_id}/widget                                                        [Agents Platform] get_agent_widget_route  — Get Agent Widget Config
+GET     /v1/convai/analytics/live-count                                                            [Agents Platform] get_live_count  — Get Live Count
+POST    /v1/convai/batch-calling/submit                                                            [Agents Platform] create_batch_call  — Submit A Batch Call Request.
+GET     /v1/convai/batch-calling/workspace                                                         [Agents Platform] get_workspace_batch_calls  — Get All Batch Calls For A Workspace.
+GET     /v1/convai/batch-calling/{batch_id}                                                        [Agents Platform] get_batch_call  — Get A Batch Call By Id.
+DELETE  /v1/convai/batch-calling/{batch_id}                                                        [Agents Platform] delete_batch_call  — Delete A Batch Call.
+POST    /v1/convai/batch-calling/{batch_id}/cancel                                                 [Agents Platform] cancel_batch_call  — Cancel A Batch Call.
+POST    /v1/convai/batch-calling/{batch_id}/retry                                                  [Agents Platform] retry_batch_call  — Retry A Batch Call.
+GET     /v1/convai/conversation/get-signed-url                                                     [Agents Platform] get_conversation_signed_link  — Get Signed Url
+GET     /v1/convai/conversation/get_signed_url                                                     [Agents Platform] get_signed_url_deprecated  — Get Signed Url
+GET     /v1/convai/conversation/token                                                              [Agents Platform] get_livekit_token  — Get Webrtc Token
+GET     /v1/convai/conversations                                                                   [Agents Platform] get_conversation_histories_route  — Get Conversations
+GET     /v1/convai/conversations/messages/smart-search                                             [Agents Platform] smart_search_conversation_messages_route  — Smart Search Conversation Messages
+GET     /v1/convai/conversations/messages/text-search                                              [Agents Platform] text_search_conversation_messages_route  — Text Search Conversation Messages
+GET     /v1/convai/conversations/{conversation_id}                                                 [Agents Platform] get_conversation_history_route  — Get Conversation Details
+DELETE  /v1/convai/conversations/{conversation_id}                                                 [Agents Platform] delete_conversation_route  — Delete Conversation
+POST    /v1/convai/conversations/{conversation_id}/analysis/run                                    [Agents Workspace Analytics] run_conversation_analysis  — Run Conversation Analysis
+GET     /v1/convai/conversations/{conversation_id}/audio                                           [Agents Platform] get_conversation_audio_route  — Get Conversation Audio
+POST    /v1/convai/conversations/{conversation_id}/feedback                                        [Agents Platform] post_conversation_feedback_route  — Send Conversation Feedback
+POST    /v1/convai/conversations/{conversation_id}/files                                           [Agents Platform] upload_file_route  — Upload File
+DELETE  /v1/convai/conversations/{conversation_id}/files/{file_id}                                 [Agents Platform] cancel_file_upload_route  — Delete File Upload
+POST    /v1/convai/environment-variables                                                           [Agents Platform] create_environment_variable  — Create Environment Variable
+GET     /v1/convai/environment-variables                                                           [Agents Platform] list_environment_variables  — List Environment Variables
+GET     /v1/convai/environment-variables/{env_var_id}                                              [Agents Platform] get_environment_variable  — Get Environment Variable
+PATCH   /v1/convai/environment-variables/{env_var_id}                                              [Agents Platform] update_environment_variable  — Update Environment Variable
+POST    /v1/convai/knowledge-base                                                                  [Agents Platform] add_documentation_to_knowledge_base  — Add To Knowledge Base
+GET     /v1/convai/knowledge-base                                                                  [Agents Platform] get_knowledge_base_list_route  — Get Knowledge Base List
+POST    /v1/convai/knowledge-base/bulk-move                                                        [Conversational AI] post_knowledge_base_bulk_move_route  — Bulk Move Entities To Folder
+POST    /v1/convai/knowledge-base/file                                                             [Agents Platform] create_file_document_route  — Create File Document
+POST    /v1/convai/knowledge-base/folder                                                           [Conversational AI] create_folder_route  — Create Folder
+POST    /v1/convai/knowledge-base/rag-index                                                        [Agents Platform] get_or_create_rag_indexes  — Compute Rag Indexes In Batch
+GET     /v1/convai/knowledge-base/rag-index                                                        [Agents Platform] get_rag_index_overview  — Get Rag Index Overview.
+GET     /v1/convai/knowledge-base/search                                                           [Agents Platform] search_knowledge_base_content_route  — Search Knowledge Base Content
+GET     /v1/convai/knowledge-base/summaries                                                        [Agents Platform] get_agent_knowledge_base_summaries_route  — Get Knowledge Base Summaries By Ids
+POST    /v1/convai/knowledge-base/text                                                             [Agents Platform] create_text_document_route  — Create Text Document
+POST    /v1/convai/knowledge-base/url                                                              [Agents Platform] create_url_document_route  — Create Url Document
+POST    /v1/convai/knowledge-base/{document_id}/move                                               [Conversational AI] post_knowledge_base_move_route  — Move Entity To Folder
+PATCH   /v1/convai/knowledge-base/{documentation_id}                                               [Agents Platform] update_document_route  — Update Document
+GET     /v1/convai/knowledge-base/{documentation_id}                                               [Agents Platform] get_documentation_from_knowledge_base  — Get Documentation From Knowledge Base
+DELETE  /v1/convai/knowledge-base/{documentation_id}                                               [Agents Platform] delete_knowledge_base_document  — Delete Knowledge Base Document Or Folder
+GET     /v1/convai/knowledge-base/{documentation_id}/chunk/{chunk_id}                              [Agents Platform] get_documentation_chunk_from_knowledge_base  — Get Documentation Chunk From Knowledge Base
+GET     /v1/convai/knowledge-base/{documentation_id}/content                                       [Agents Platform] get_knowledge_base_content  — Get Document Content
+GET     /v1/convai/knowledge-base/{documentation_id}/dependent-agents                              [Agents Platform] get_knowledge_base_dependent_agents  — Get Dependent Agents List
+POST    /v1/convai/knowledge-base/{documentation_id}/rag-index                                     [Agents Platform] rag_index_status  — Compute Rag Index.
+GET     /v1/convai/knowledge-base/{documentation_id}/rag-index                                     [Agents Platform] get_rag_indexes  — Get Rag Indexes Of The Specified Knowledgebase Document.
+DELETE  /v1/convai/knowledge-base/{documentation_id}/rag-index/{rag_index_id}                      [Agents Platform] delete_rag_index  — Delete Rag Index.
+POST    /v1/convai/knowledge-base/{documentation_id}/refresh                                       [Agents Platform] refresh_url_document_route  — Refresh Url Document Content
+GET     /v1/convai/knowledge-base/{documentation_id}/source-file-url                               [Agents Platform] get_knowledge_base_source_file_url  — Get Document Source File Url
+POST    /v1/convai/llm-usage/calculate                                                             [Agents Platform] get_public_llm_expected_cost_calculation  — Calculate Expected Llm Usage
+GET     /v1/convai/llm/list                                                                        [Agents Platform] list_available_llms  — List Available Llms
+POST    /v1/convai/mcp-servers                                                                     [Agents Platform] create_mcp_server_route  — Create Mcp Server
+GET     /v1/convai/mcp-servers                                                                     [Agents Platform] list_mcp_servers_route  — List Mcp Servers
+GET     /v1/convai/mcp-servers/{mcp_server_id}                                                     [Agents Platform] get_mcp_route  — Get Mcp Server
+DELETE  /v1/convai/mcp-servers/{mcp_server_id}                                                     [Agents Platform] delete_mcp_server_route  — Delete Mcp Server
+PATCH   /v1/convai/mcp-servers/{mcp_server_id}                                                     [Agents Platform] update_mcp_server_config_route  — Update Mcp Server Configuration
+PATCH   /v1/convai/mcp-servers/{mcp_server_id}/approval-policy                                     [Agents Platform] update_mcp_server_approval_policy_route  — Update Mcp Server Approval Policy
+POST    /v1/convai/mcp-servers/{mcp_server_id}/tool-approvals                                      [Agents Platform] add_mcp_server_tool_approval_route  — Create Mcp Server Tool Approval
+DELETE  /v1/convai/mcp-servers/{mcp_server_id}/tool-approvals/{tool_name}                          [Agents Platform] remove_mcp_server_tool_approval_route  — Delete Mcp Server Tool Approval
+POST    /v1/convai/mcp-servers/{mcp_server_id}/tool-configs                                        [Agents Platform] add_mcp_tool_config_override_route  — Create Mcp Tool Configuration Override
+GET     /v1/convai/mcp-servers/{mcp_server_id}/tool-configs/{tool_name}                            [Agents Platform] get_mcp_tool_config_override_route  — Get Mcp Tool Configuration Override
+PATCH   /v1/convai/mcp-servers/{mcp_server_id}/tool-configs/{tool_name}                            [Agents Platform] update_mcp_tool_config_override_route  — Update Mcp Tool Configuration Override
+DELETE  /v1/convai/mcp-servers/{mcp_server_id}/tool-configs/{tool_name}                            [Agents Platform] remove_mcp_tool_config_override_route  — Delete Mcp Tool Configuration Override
+GET     /v1/convai/mcp-servers/{mcp_server_id}/tools                                               [Agents Platform] list_mcp_server_tools_route  — List Mcp Server Tools
+POST    /v1/convai/phone-numbers                                                                   [Agents Platform] create_phone_number_route  — Import Phone Number
+GET     /v1/convai/phone-numbers                                                                   [Agents Platform] list_phone_numbers_route  — List Phone Numbers
+GET     /v1/convai/phone-numbers/{phone_number_id}                                                 [Agents Platform] get_phone_number_route  — Get Phone Number
+DELETE  /v1/convai/phone-numbers/{phone_number_id}                                                 [Agents Platform] delete_phone_number_route  — Delete Phone Number
+PATCH   /v1/convai/phone-numbers/{phone_number_id}                                                 [Agents Platform] update_phone_number_route  — Update Phone Number
+POST    /v1/convai/secrets                                                                         [Agents Platform] create_secret_route  — Create Convai Workspace Secret
+GET     /v1/convai/secrets                                                                         [Agents Platform] get_secrets_route  — Get Convai Workspace Secrets
+GET     /v1/convai/secrets/{secret_id}                                                             [Agents Platform] get_secret_route  — Get Convai Workspace Secret
+DELETE  /v1/convai/secrets/{secret_id}                                                             [Agents Platform] delete_secret_route  — Delete Convai Workspace Secret
+PATCH   /v1/convai/secrets/{secret_id}                                                             [Agents Platform] update_secret_route  — Update Convai Workspace Secret
+GET     /v1/convai/secrets/{secret_id}/dependencies/{resource_type}                                [Agents Platform] get_secret_dependencies_route  — Get Secret Dependencies By Type
+GET     /v1/convai/settings                                                                        [Agents Platform] get_settings_route  — Get Convai Settings
+PATCH   /v1/convai/settings                                                                        [Agents Platform] update_settings_route  — Update Convai Settings
+GET     /v1/convai/settings/dashboard                                                              [Agents Platform] get_dashboard_settings_route  — Get Convai Dashboard Settings
+PATCH   /v1/convai/settings/dashboard                                                              [Agents Platform] update_dashboard_settings_route  — Update Convai Dashboard Settings
+POST    /v1/convai/sip-trunk/outbound-call                                                         [Agents Platform] handle_sip_trunk_outbound_call  — Handle An Outbound Call Via Sip Trunk
+GET     /v1/convai/test-invocations                                                                [] list_test_invocations_route  — List Test Invocations
+GET     /v1/convai/test-invocations/{test_invocation_id}                                           [] get_test_invocation_route  — Get Test Invocation
+POST    /v1/convai/test-invocations/{test_invocation_id}/resubmit                                  [] resubmit_tests_route  — Resubmit Tests
+POST    /v1/convai/tools                                                                           [Agents Platform] add_tool_route  — Add Tool
+GET     /v1/convai/tools                                                                           [Agents Platform] get_tools_route  — Get Tools
+GET     /v1/convai/tools/{tool_id}                                                                 [Agents Platform] get_tool_route  — Get Tool
+PATCH   /v1/convai/tools/{tool_id}                                                                 [Agents Platform] update_tool_route  — Update Tool
+DELETE  /v1/convai/tools/{tool_id}                                                                 [Agents Platform] delete_tool_route  — Delete Tool
+GET     /v1/convai/tools/{tool_id}/dependent-agents                                                [Agents Platform] get_tool_dependent_agents_route  — Get Dependent Agents List
+GET     /v1/convai/tools/{tool_id}/executions                                                      [Agents Platform] get_tool_executions_route  — Get Tool Executions
+POST    /v1/convai/twilio/outbound-call                                                            [Agents Platform] handle_twilio_outbound_call  — Handle An Outbound Call Via Twilio
+POST    /v1/convai/twilio/register-call                                                            [Agents Platform] register_twilio_call  — Register A Twilio Call And Return Twiml
+GET     /v1/convai/users                                                                           [Agents Platform] get_conversation_users_route  — Get Conversation Users
+GET     /v1/convai/whatsapp-accounts                                                               [Agents Platform] list_whatsapp_accounts  — List Whatsapp Accounts
+GET     /v1/convai/whatsapp-accounts/{phone_number_id}                                             [Agents Platform] get_whatsapp_account  — Get Whatsapp Account
+PATCH   /v1/convai/whatsapp-accounts/{phone_number_id}                                             [Agents Platform] update_whatsapp_account  — Update Whatsapp Account
+DELETE  /v1/convai/whatsapp-accounts/{phone_number_id}                                             [Agents Platform] delete_whatsapp_account  — Delete Whatsapp Account
+POST    /v1/convai/whatsapp/outbound-call                                                          [Agents Platform] whatsapp_outbound_call  — Make An Outbound Call Via Whatsapp
+POST    /v1/convai/whatsapp/outbound-message                                                       [Agents Platform] whatsapp_outbound_message  — Send An Outbound Message Via Whatsapp
+GET     /v1/dubbing                                                                                [dubbing] list_dubs  — List Dubs
+POST    /v1/dubbing                                                                                [dubbing] create_dubbing  — Dub A Video Or An Audio File
+GET     /v1/dubbing/resource/{dubbing_id}                                                          [dubbing] get_dubbing_resource  — Get The Dubbing Resource For An Id.
+POST    /v1/dubbing/resource/{dubbing_id}/dub                                                      [dubbing] dub  — Dubs All Or Some Segments And Languages
+POST    /v1/dubbing/resource/{dubbing_id}/language                                                 [dubbing] add_language  — Add A Language To The Resource
+POST    /v1/dubbing/resource/{dubbing_id}/migrate-segments                                         [dubbing] migrate_segments  — Move Segments Between Speakers
+POST    /v1/dubbing/resource/{dubbing_id}/render/{language}                                        [dubbing] render  — Render Audio Or Video For The Given Language
+DELETE  /v1/dubbing/resource/{dubbing_id}/segment/{segment_id}                                     [dubbing] delete_segment  — Deletes A Single Segment
+PATCH   /v1/dubbing/resource/{dubbing_id}/segment/{segment_id}/{language}                          [dubbing] update_segment_language  — Modify A Single Segment
+POST    /v1/dubbing/resource/{dubbing_id}/speaker                                                  [dubbing] create_speaker  — Create A New Speaker
+PATCH   /v1/dubbing/resource/{dubbing_id}/speaker/{speaker_id}                                     [dubbing] update_speaker  — Update Metadata For A Speaker
+POST    /v1/dubbing/resource/{dubbing_id}/speaker/{speaker_id}/segment                             [dubbing] create_clip  — Create A Segment For The Speaker
+GET     /v1/dubbing/resource/{dubbing_id}/speaker/{speaker_id}/similar-voices                      [dubbing] get_similar_voices_for_speaker  — Search The Elevenlabs Library For Voices Similar To A Speaker.
+POST    /v1/dubbing/resource/{dubbing_id}/transcribe                                               [dubbing] transcribe  — Transcribes Segments
+POST    /v1/dubbing/resource/{dubbing_id}/translate                                                [dubbing] translate  — Translates All Or Some Segments And Languages
+GET     /v1/dubbing/{dubbing_id}                                                                   [dubbing] get_dubbed_metadata  — Get Dubbing
+DELETE  /v1/dubbing/{dubbing_id}                                                                   [dubbing] delete_dubbing  — Delete Dubbing
+GET     /v1/dubbing/{dubbing_id}/audio/{language_code}                                             [dubbing] get_dubbed_file  — Get Dubbed File
+GET     /v1/dubbing/{dubbing_id}/transcript/{language_code}                                        [dubbing] get_dubbed_transcript_file  — Get Dubbed Transcript
+GET     /v1/dubbing/{dubbing_id}/transcripts/{language_code}/format/{format_type}                  [dubbing] get_dubbing_transcripts  — Retrieve A Transcript
+POST    /v1/forced-alignment                                                                       [forced-alignment] forced_alignment  — Create Forced Alignment
+GET     /v1/history                                                                                [speech-history] get_speech_history  — List Generated Items
+POST    /v1/history/download                                                                       [speech-history] download_speech_history_items  — Download History Items
+GET     /v1/history/{history_item_id}                                                              [speech-history] get_speech_history_item_by_id  — Get History Item
+DELETE  /v1/history/{history_item_id}                                                              [speech-history] delete_speech_history_item  — Delete History Item
+GET     /v1/history/{history_item_id}/audio                                                        [speech-history] get_audio_full_from_speech_history_item  — Get Audio From History Item
+GET     /v1/models                                                                                 [models] get_models  — Get Models
+POST    /v1/music                                                                                  [music-generation] generate  — Compose Music
+POST    /v1/music/detailed                                                                         [music-generation] compose_detailed  — Compose Music With A Detailed Response
+POST    /v1/music/plan                                                                             [music-generation] compose_plan  — Generate Composition Plan
+POST    /v1/music/stem-separation                                                                  [music-generation] separate_song_stems  — Stem Separation
+POST    /v1/music/stream                                                                           [music-generation] stream_compose  — Stream Composed Music
+POST    /v1/music/upload                                                                           [music-generation] upload_song  — Upload Music
+POST    /v1/music/video-to-music                                                                   [video-to-music] video_to_music  — Video To Music
+GET     /v1/pronunciation-dictionaries                                                             [Pronunciation Dictionary] get_pronunciation_dictionaries_metadata  — Get Pronunciation Dictionaries
+POST    /v1/pronunciation-dictionaries/add-from-file                                               [Pronunciation Dictionary] add_from_file  — Add A Pronunciation Dictionary
+POST    /v1/pronunciation-dictionaries/add-from-rules                                              [Pronunciation Dictionary] add_from_rules  — Add A Pronunciation Dictionary
+GET     /v1/pronunciation-dictionaries/{dictionary_id}/{version_id}/download                       [Pronunciation Dictionary] get_pronunciation_dictionary_version_pls  — Get A Pls File With A Pronunciation Dictionary Version Rules
+PATCH   /v1/pronunciation-dictionaries/{pronunciation_dictionary_id}                               [Pronunciation Dictionary] patch_pronunciation_dictionary  — Update Pronunciation Dictionary
+GET     /v1/pronunciation-dictionaries/{pronunciation_dictionary_id}                               [Pronunciation Dictionary] get_pronunciation_dictionary_metadata  — Get Metadata For A Pronunciation Dictionary
+POST    /v1/pronunciation-dictionaries/{pronunciation_dictionary_id}/add-rules                     [Pronunciation Dictionary] add_rules  — Add Rules To The Pronunciation Dictionary
+POST    /v1/pronunciation-dictionaries/{pronunciation_dictionary_id}/remove-rules                  [Pronunciation Dictionary] remove_rules  — Remove Rules From The Pronunciation Dictionary
+POST    /v1/pronunciation-dictionaries/{pronunciation_dictionary_id}/set-rules                     [Pronunciation Dictionary] set_rules  — Set Rules On The Pronunciation Dictionary
+GET     /v1/service-accounts                                                                       [workspace] get_workspace_service_accounts  — Get Workspace Service Accounts
+GET     /v1/service-accounts/{service_account_user_id}/api-keys                                    [workspace] get_service_account_api_keys_route  — Get Service Account Api Keys Route
+POST    /v1/service-accounts/{service_account_user_id}/api-keys                                    [workspace] create_service_account_api_key  — Create Service Account Api Key
+PATCH   /v1/service-accounts/{service_account_user_id}/api-keys/{api_key_id}                       [workspace] edit_service_account_api_key  — Edit Service Account Api Key
+DELETE  /v1/service-accounts/{service_account_user_id}/api-keys/{api_key_id}                       [workspace] delete_service_account_api_key  — Delete Service Account Api Key
+GET     /v1/shared-voices                                                                          [voices] get_library_voices  — Get Voices
+POST    /v1/similar-voices                                                                         [voices] get_similar_library_voices  — Get Similar Library Voices
+POST    /v1/single-use-token/{token_type}                                                          [Single Use Token] get_single_use_token  — Create Single Use Token
+POST    /v1/sound-generation                                                                       [sound-generation] sound_generation  — Sound Generation
+POST    /v1/speech-to-speech/{voice_id}                                                            [speech-to-speech] speech_to_speech_full  — Speech To Speech
+POST    /v1/speech-to-speech/{voice_id}/stream                                                     [speech-to-speech] speech_to_speech_stream  — Speech To Speech Streaming
+POST    /v1/speech-to-text                                                                         [speech-to-text] speech_to_text  — Speech To Text
+GET     /v1/speech-to-text/transcripts/{transcription_id}                                          [speech-to-text] get_transcript_by_id  — Get Transcript By Id
+DELETE  /v1/speech-to-text/transcripts/{transcription_id}                                          [speech-to-text] delete_transcript_by_id  — Delete Transcript By Id
+POST    /v1/studio/podcasts                                                                        [studio] create_podcast  — Create Podcast
+GET     /v1/studio/projects                                                                        [studio] get_projects  — List Studio Projects
+POST    /v1/studio/projects                                                                        [studio] add_project  — Create Studio Project
+POST    /v1/studio/projects/{project_id}                                                           [studio] edit_project  — Update Studio Project
+GET     /v1/studio/projects/{project_id}                                                           [studio] get_project_by_id  — Get Studio Project
+DELETE  /v1/studio/projects/{project_id}                                                           [studio] delete_project  — Delete Studio Project
+GET     /v1/studio/projects/{project_id}/chapters                                                  [studio] get_chapters  — List Chapters
+POST    /v1/studio/projects/{project_id}/chapters                                                  [studio] add_chapter  — Create Chapter
+GET     /v1/studio/projects/{project_id}/chapters/{chapter_id}                                     [studio] get_chapter_by_id_endpoint  — Get Chapter
+POST    /v1/studio/projects/{project_id}/chapters/{chapter_id}                                     [studio] edit_chapter  — Update Chapter
+DELETE  /v1/studio/projects/{project_id}/chapters/{chapter_id}                                     [studio] delete_chapter_endpoint  — Delete Chapter
+POST    /v1/studio/projects/{project_id}/chapters/{chapter_id}/convert                             [studio] convert_chapter_endpoint  — Convert Chapter
+GET     /v1/studio/projects/{project_id}/chapters/{chapter_id}/snapshots                           [studio] get_chapter_snapshots  — List Chapter Snapshots
+GET     /v1/studio/projects/{project_id}/chapters/{chapter_id}/snapshots/{chapter_snapshot_id}     [studio] get_chapter_snapshot_endpoint  — Get Chapter Snapshot
+POST    /v1/studio/projects/{project_id}/chapters/{chapter_id}/snapshots/{chapter_snapshot_id}/stream [studio] stream_chapter_snapshot_audio  — Stream Chapter Audio
+POST    /v1/studio/projects/{project_id}/content                                                   [studio] edit_project_content  — Update Studio Project Content
+POST    /v1/studio/projects/{project_id}/convert                                                   [studio] convert_project_endpoint  — Convert Studio Project
+GET     /v1/studio/projects/{project_id}/muted-tracks                                              [studio] get_project_muted_tracks_endpoint  — Get Project Muted Tracks
+POST    /v1/studio/projects/{project_id}/pronunciation-dictionaries                                [studio] update_pronunciation_dictionaries  — Create Pronunciation Dictionaries
+GET     /v1/studio/projects/{project_id}/snapshots                                                 [studio] get_project_snapshots  — List Studio Project Snapshots
+GET     /v1/studio/projects/{project_id}/snapshots/{project_snapshot_id}                           [studio] get_project_snapshot_endpoint  — Get Project Snapshot
+POST    /v1/studio/projects/{project_id}/snapshots/{project_snapshot_id}/archive                   [studio] stream_project_snapshot_archive_endpoint  — Stream Archive With Studio Project Audio
+POST    /v1/studio/projects/{project_id}/snapshots/{project_snapshot_id}/stream                    [studio] stream_project_snapshot_audio_endpoint  — Stream Studio Project Audio
+POST    /v1/text-to-dialogue                                                                       [text-to-dialogue] text_to_dialogue  — Text To Dialogue (Multi-Voice)
+POST    /v1/text-to-dialogue/stream                                                                [text-to-dialogue] text_to_dialogue_stream  — Text To Dialogue (Multi-Voice) Streaming
+POST    /v1/text-to-dialogue/stream/with-timestamps                                                [text-to-dialogue] text_to_dialogue_stream_with_timestamps  — Text To Dialogue Streaming With Timestamps
+POST    /v1/text-to-dialogue/with-timestamps                                                       [text-to-dialogue] text_to_dialogue_full_with_timestamps  — Text To Dialogue With Timestamps
+POST    /v1/text-to-speech/{voice_id}                                                              [text-to-speech] text_to_speech_full  — Text To Speech
+POST    /v1/text-to-speech/{voice_id}/stream                                                       [text-to-speech] text_to_speech_stream  — Text To Speech Streaming
+POST    /v1/text-to-speech/{voice_id}/stream/with-timestamps                                       [text-to-speech] text_to_speech_stream_with_timestamps  — Text To Speech Streaming With Timestamps
+POST    /v1/text-to-speech/{voice_id}/with-timestamps                                              [text-to-speech] text_to_speech_full_with_timestamps  — Text To Speech With Timestamps
+POST    /v1/text-to-voice                                                                          [text-to-voice] create_voice  — Create A New Voice From Voice Preview
+POST    /v1/text-to-voice/create-previews                                                          [text-to-voice] text_to_voice  — Generate A Voice Preview From Description
+POST    /v1/text-to-voice/design                                                                   [text-to-voice] text_to_voice_design  — Design A Voice.
+GET     /v1/text-to-voice/{generated_voice_id}/stream                                              [text-to-voice] text_to_voice_preview_stream  — Text To Voice Preview Streaming
+POST    /v1/text-to-voice/{voice_id}/remix                                                         [text-to-voice] text_to_voice_remix  — Remix A Voice.
+GET     /v1/usage/character-stats                                                                  [] usage_characters  — Get Characters Usage Metrics (Deprecated)
+GET     /v1/user                                                                                   [] get_user_info  — Get User Info
+GET     /v1/user/subscription                                                                      [] get_user_subscription_info  — Get User Subscription Info
+GET     /v1/voices                                                                                 [voices] get_voices  — List Voices
+POST    /v1/voices/add                                                                             [voices] add_voice  — Add Voice
+POST    /v1/voices/add/{public_user_id}/{voice_id}                                                 [voices] add_sharing_voice  — Add Shared Voice
+POST    /v1/voices/pvc                                                                             [pvc-voices] create_pvc_voice  — Create Pvc Voice
+POST    /v1/voices/pvc/{voice_id}                                                                  [pvc-voices] edit_pvc_voice  — Edit Pvc Voice
+GET     /v1/voices/pvc/{voice_id}/captcha                                                          [pvc-voices] get_pvc_voice_captcha  — Get Pvc Voice Captcha
+POST    /v1/voices/pvc/{voice_id}/captcha                                                          [pvc-voices] verify_pvc_voice_captcha  — Verify Pvc Voice Captcha
+POST    /v1/voices/pvc/{voice_id}/samples                                                          [pvc-voices] add_pvc_voice_samples  — Add Samples To Pvc Voice
+POST    /v1/voices/pvc/{voice_id}/samples/{sample_id}                                              [pvc-voices] edit_pvc_voice_sample  — Update Pvc Voice Sample
+DELETE  /v1/voices/pvc/{voice_id}/samples/{sample_id}                                              [pvc-voices] delete_pvc_voice_sample  — Delete Pvc Voice Sample
+GET     /v1/voices/pvc/{voice_id}/samples/{sample_id}/audio                                        [pvc-voices] get_pvc_sample_audio  — Retrieve Voice Sample Audio
+POST    /v1/voices/pvc/{voice_id}/samples/{sample_id}/separate-speakers                            [pvc-voices] start_speaker_separation  — Start Speaker Separation
+GET     /v1/voices/pvc/{voice_id}/samples/{sample_id}/speakers                                     [pvc-voices] get_pvc_sample_speakers  — Retrieve Speaker Separation Status
+GET     /v1/voices/pvc/{voice_id}/samples/{sample_id}/speakers/{speaker_id}/audio                  [pvc-voices] get_speaker_audio  — Retrieve Separated Speaker Audio
+GET     /v1/voices/pvc/{voice_id}/samples/{sample_id}/waveform                                     [pvc-voices] get_pvc_sample_visual_waveform  — Retrieve Voice Sample Visual Waveform
+POST    /v1/voices/pvc/{voice_id}/train                                                            [pvc-voices] run_pvc_voice_training  — Run Pvc Training
+POST    /v1/voices/pvc/{voice_id}/verification                                                     [pvc-voices] request_pvc_manual_verification  — Request Manual Verification
+GET     /v1/voices/settings/default                                                                [voices] get_voice_settings_default  — Get Default Voice Settings.
+GET     /v1/voices/{voice_id}                                                                      [voices] get_voice_by_id  — Get Voice
+DELETE  /v1/voices/{voice_id}                                                                      [voices] delete_voice  — Delete Voice
+POST    /v1/voices/{voice_id}/edit                                                                 [voices] edit_voice  — Edit Voice
+DELETE  /v1/voices/{voice_id}/samples/{sample_id}                                                  [samples] delete_sample  — Delete Sample
+GET     /v1/voices/{voice_id}/samples/{sample_id}/audio                                            [samples] get_audio_from_sample  — Get Audio From Sample
+GET     /v1/voices/{voice_id}/settings                                                             [voices] get_voice_settings  — Get Voice Settings
+POST    /v1/voices/{voice_id}/settings/edit                                                        [voices] edit_voice_settings  — Edit Voice Settings
+POST    /v1/workspace/analytics/query/usage-by-product-over-time                                   [access:all] usage_by_product_over_time  — Get Workspace Usage
+POST    /v1/workspace/auth-connections                                                             [workspace] create_auth_connection  — Create Workspace Auth Connection
+GET     /v1/workspace/auth-connections                                                             [workspace] list_auth_connections  — Get Workspace Auth Connections
+DELETE  /v1/workspace/auth-connections/{auth_connection_id}                                        [workspace] delete_auth_connection  — Delete Workspace Auth Connection
+GET     /v1/workspace/groups                                                                       [workspace] get_groups_endpoint  — Get All Groups
+GET     /v1/workspace/groups/search                                                                [workspace] search_groups  — Search User Groups
+POST    /v1/workspace/groups/{group_id}/members                                                    [workspace] add_member  — Add Member To User Group
+POST    /v1/workspace/groups/{group_id}/members/remove                                             [workspace] remove_member  — Delete Member From User Group
+DELETE  /v1/workspace/invites                                                                      [workspace] delete_invite  — Delete Existing Invitation
+POST    /v1/workspace/invites/add                                                                  [workspace] invite_user  — Invite User
+POST    /v1/workspace/invites/add-bulk                                                             [workspace] invite_users_bulk  — Invite Multiple Users
+POST    /v1/workspace/members                                                                      [workspace] update_workspace_member  — Update Member
+GET     /v1/workspace/resources/{resource_id}                                                      [workspace] get_resource_metadata  — Get Resource
+POST    /v1/workspace/resources/{resource_id}/share                                                [workspace] share_resource_endpoint  — Share Workspace Resource
+POST    /v1/workspace/resources/{resource_id}/unshare                                              [workspace] unshare_resource_endpoint  — Unshare Workspace Resource
+GET     /v1/workspace/webhooks                                                                     [workspace] get_workspace_webhooks_route  — List Workspace Webhooks
+POST    /v1/workspace/webhooks                                                                     [workspace] create_workspace_webhook_route  — Create Workspace Webhook
+PATCH   /v1/workspace/webhooks/{webhook_id}                                                        [workspace] edit_workspace_webhook_route  — Update Workspace Webhook
+DELETE  /v1/workspace/webhooks/{webhook_id}                                                        [workspace] delete_workspace_webhook_route  — Delete Workspace Webhook
+GET     /v2/voices                                                                                 [voices] get_user_voices_v2  — Get Voices V2
