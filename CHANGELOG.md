@@ -3,6 +3,41 @@
 All notable changes to `elevenlabs-cli` are listed here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org).
 
+## [0.2.1] — 2026-04-21
+
+### Added — surfaces agents kept tripping over
+
+- `elevenlabs agents create --expressive-mode` — enables v3 expressive prosody. Passing the flag alone auto-upgrades `--model-id` to `eleven_v3_conversational` (the only model that honours it).
+- `elevenlabs agents create --max-duration-seconds <n>` — per-agent hard call cap (default stays 300s). Previously callers had to PATCH the config after create.
+- `elevenlabs phone call --dynamic-variables <JSON or @file>` — per-call `{{placeholder}}` values. Forwards to `conversation_initiation_client_data.dynamic_variables` on the outbound-call body. The help text had been advertising this flag since 0.2.0 but it was never wired up — calling it used to fail with an unexpected-argument error.
+
+### Added — agent-info manifest + `--help` now document every footgun
+
+- `agent-info`: new top-level `known_values` (agent_tts_model_ids, agent_turn_models, agent_turn_eagerness) and `gotchas` (agents, turn_taking). Agents that bootstrap from `elevenlabs agent-info` now see the complete server-enforced allowlists without having to probe the API.
+- `agent-info`: `agents create`, `agents update`, and `phone call` entries are now structured objects (description + options + defaults + common_patch_paths) instead of one-liners.
+- `agents update --help` (new `AGENTS_UPDATE_HELP`): documents every common patch path (`conversation_config.agent.prompt.*`, `.tts.*`, `.turn.*`, `.conversation.*`), the server-enforced `tts.model_id` allowlist, the `turn_model` / `turn_eagerness` / `disable_first_message_interruptions` / `background_voice_detection` knobs, and four copy-paste patch examples (swap to v3 conversational, extend call limit, change LLM, rename agent).
+- `agents create --help`: expanded with the full allowlist, the `eleven_v3` → `eleven_v3_conversational` correction, and the silent-drop footgun for `expressive_mode`.
+- `phone call --help`: documents the new `--dynamic-variables` flag's JSON-object requirement + `@file` loading.
+
+### Fixed — client-side validation catches the two silent bugs we hit
+
+- **P0** `agents create --model-id eleven_v3` now errors out with exit 3 and a concrete suggestion pointing to `eleven_v3_conversational`. The server previously rejected it with the opaque "English Agents must use turbo or flash v2"; now the pre-flight error spells out the correction.
+- **P0** `agents update --patch` now pre-validates the JSON body. Two footguns are caught before we hit the server:
+  1. `conversation_config.tts.model_id = "eleven_v3"` — rejected with a `eleven_v3_conversational` suggestion.
+  2. `conversation_config.tts.expressive_mode = true` with any `model_id` other than `eleven_v3_conversational` — the server silently drops the flag; we now reject pre-flight so callers can't falsely believe expressive mode is on.
+- **P1** `phone call --dynamic-variables` enforces JSON-object shape (not array/string) and provides file-not-found guidance for the `@path` form.
+
+### Changed — defaults rebalanced from real-world dialing
+
+- `agents create` now scaffolds `conversation_config.turn.disable_first_message_interruptions = true`. Tiny user backchannels ("yes", "mm-hmm") no longer cut off the greeting on the first ring — the single most common audio-UX regression observed in 0.2.0.
+- `agents create` now writes `turn.turn_model = "turn_v2"`, `turn.turn_eagerness = "normal"`, `turn.turn_timeout = 7` explicitly (instead of relying on server defaults). `turn_v3` is documented as an opt-in because on real calls it was observed swallowing short turn-ends when paired with some LLMs, leaving the agent silent after the user's first reply.
+- `agents create` no longer sets `background_voice_detection`; real-world testing showed `true` mutes the user's own voice on speakerphones. It stays a documented PATCH knob in `agents update --help` and the `gotchas.turn_taking` block of `agent-info`.
+
+### Internal
+
+- New module `src/commands/agents/agent_config.rs` holds the `AGENT_TTS_MODEL_IDS` allowlist, `validate_agent_tts_model`, `validate_patch`, and the shared `GOTCHAS` text used by `--help` and `agent-info`. 7 unit tests cover the allowlist round-trip and the two patch footguns.
+- All existing tests still green. Clippy + `cargo fmt --check` clean.
+
 ## [0.2.0] — 2026-04-20
 
 ### Added — new command families
