@@ -1175,12 +1175,18 @@ pub enum AgentsAction {
         #[arg(long, default_value = "en")]
         language: String,
 
-        /// LLM id. Default `gemini-2.5-flash` (matches the OpenAPI spec's
-        /// current default on `PromptAgentAPIModel.llm`). Discover the full
-        /// backend allowlist with `elevenlabs agents llms`. If
-        /// `conversations show` reports 0 output tokens on the chosen LLM,
-        /// the backend rejected it and fell back silently — swap LLMs.
-        #[arg(long, default_value = "gemini-2.5-flash")]
+        /// LLM id. Default `gemini-3.1-flash-lite-preview` — the newest
+        /// Gemini flash preview the ElevenLabs Agents backend accepts (the
+        /// OpenAPI spec's `PromptAgentAPIModel.llm` *default* string is
+        /// `gemini-2.5-flash`, but that's the older stable release; 3.1 is
+        /// current, empirically working, and lower-latency for turn-based
+        /// voice agents). `gemini-3.1-flash-live-preview` / `gemini-3.1-
+        /// flash-preview` exist at Google but aren't in the ElevenLabs
+        /// allowlist yet. Discover the full allowlist with
+        /// `elevenlabs agents llms`. If `conversations show` reports 0
+        /// output tokens on the chosen LLM, the backend rejected it and
+        /// fell back silently — swap LLMs.
+        #[arg(long, default_value = "gemini-3.1-flash-lite-preview")]
         llm: String,
 
         /// Temperature 0.0-1.0

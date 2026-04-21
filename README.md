@@ -272,7 +272,7 @@ elevenlabs agents show <agent_id>        # alias: get
 elevenlabs agents create <name>
     --system-prompt "..."
     [--first-message "Hi, how can I help?"]
-    [--voice-id ID] [--language en] [--llm gemini-2.5-flash]
+    [--voice-id ID] [--language en] [--llm gemini-3.1-flash-lite-preview]
     [--temperature 0.5] [--model-id eleven_flash_v2_5]
     [--expressive-mode] [--max-duration-seconds 600]
     [--voicemail-detection] [--voicemail-message "..."]

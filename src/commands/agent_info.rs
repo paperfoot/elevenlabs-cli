@@ -153,7 +153,7 @@ pub fn run() {
                 "description": "Create a conversational AI agent. See `known_values.agent_tts_model_ids` and `gotchas.agents` before passing --model-id / --llm / --expressive-mode.",
                 "aliases": ["new"],
                 "defaults": {
-                    "--llm": "gemini-2.5-flash",
+                    "--llm": "gemini-3.1-flash-lite-preview",
                     "--model-id": "eleven_flash_v2_5",
                     "--temperature": 0.5,
                     "--language": "en",

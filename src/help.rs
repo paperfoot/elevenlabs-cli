@@ -248,12 +248,14 @@ EXAMPLES
 pub const AGENTS_CREATE_HELP: &str = "TIPS
  - --system-prompt is REQUIRED — there is no interactive fallback. Keep
    prompts specific; vague prompts yield vague agents.
- - Defaults: --llm gemini-2.5-flash (spec default on
-   PromptAgentAPIModel.llm), --model-id eleven_flash_v2_5 (lowest
-   TTS latency, current agent recommendation), --max-duration-seconds
-   600 (10 min, matching the spec default). Override --llm for
-   reasoning-heavy use cases; override --model-id for higher-fidelity
-   voice; bump --max-duration-seconds for long-form interviews.
+ - Defaults: --llm gemini-3.1-flash-lite-preview (newest Gemini flash
+   preview the ElevenLabs backend accepts — the OpenAPI spec nominally
+   defaults to the older gemini-2.5-flash but 3.1 is current and lower
+   latency in practice), --model-id eleven_flash_v2_5 (lowest TTS
+   latency, current agent recommendation), --max-duration-seconds 600
+   (10 min, matching the spec default). Override --llm for reasoning-
+   heavy use cases; override --model-id for higher-fidelity voice;
+   bump --max-duration-seconds for long-form interviews.
  - Valid --model-id values (server-enforced allowlist):
    eleven_flash_v2_5 (recommended), eleven_flash_v2, eleven_multilingual_v2,
    eleven_v3_conversational, eleven_turbo_v2_5 (DEPRECATED —
@@ -299,7 +301,7 @@ EXAMPLES
  $ elevenlabs agents create \"Research Assistant\" \\
      --system-prompt \"$(cat prompts/ra.txt)\" \\
      --voice-id 21m00Tcm4TlvDq8ikWAM \\
-     --llm gemini-2.5-flash --model-id eleven_multilingual_v2
+     --llm gemini-3.1-flash-lite-preview --model-id eleven_multilingual_v2
 
  # Attach docs after create
  $ AGENT=$(elevenlabs agents create ... --json | jq -r '.data.agent_id')
@@ -365,7 +367,7 @@ EXAMPLES
  $ elevenlabs agents update agent_abc --patch p.json
 
  # Change just the LLM
- $ echo '{\"conversation_config\":{\"agent\":{\"prompt\":{\"llm\":\"gemini-2.5-flash\"}}}}' > p.json
+ $ echo '{\"conversation_config\":{\"agent\":{\"prompt\":{\"llm\":\"gemini-3.1-flash-lite-preview\"}}}}' > p.json
  $ elevenlabs agents update agent_abc --patch p.json
 
  # Rename the agent (top-level, not inside conversation_config)

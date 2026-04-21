@@ -51,8 +51,10 @@ pub const GOTCHAS: &[&str] = &[
     "expressive_mode only takes effect with model_id=eleven_v3_conversational. With any other \
      model the server silently drops the flag — the PATCH succeeds but expressive_mode stays false.",
     "--llm accepts any string but the Agents backend has its own allowlist. Discover the live list \
-     with `elevenlabs agents llms`. The OpenAPI spec default is `gemini-2.5-flash`. If an accepted \
-     LLM fails to generate at conversation time (0 output tokens in `conversations show`), swap LLMs.",
+     with `elevenlabs agents llms`. This CLI defaults to `gemini-3.1-flash-lite-preview` (the newest \
+     Gemini flash preview in the ElevenLabs enum) — the OpenAPI spec default `gemini-2.5-flash` is \
+     the older stable release. If an accepted LLM fails to generate at conversation time (0 output \
+     tokens in `conversations show`), swap LLMs.",
     "Spec default for conversation.max_duration_seconds is 600 (10 min). This CLI's \
      `agents create` defaults to the same value. Bump to 1800 (30 min) or higher for long-form \
      interviews / coaching — calls hang up hard at this limit regardless of transcript state.",

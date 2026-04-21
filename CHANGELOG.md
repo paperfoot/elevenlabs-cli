@@ -3,6 +3,26 @@
 All notable changes to `elevenlabs-cli` are listed here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org).
 
+## [0.3.2] — 2026-04-21
+
+### Changed — `--llm` default reverted to the newest preview
+
+v0.3.1 moved the `agents create --llm` default to `gemini-2.5-flash`
+because the OpenAPI spec lists that string as the default on
+`PromptAgentAPIModel.llm`. That was a regression — the spec's "default"
+tracks the oldest-stable release, not the newest-preview. ElevenLabs
+already accepts several newer Gemini flash previews
+(`gemini-3-flash-preview`, `gemini-3.1-flash-lite-preview`); our
+maintainer's live Guidance 40 session empirically verified
+`gemini-3.1-flash-lite-preview` as the fastest reliable default. This
+release reverts to that.
+
+- `agents create --llm` default: `gemini-2.5-flash` →
+  `gemini-3.1-flash-lite-preview`. The specialized voice model
+  `gemini-3.1-flash-live-preview` exists at Google but isn't in the
+  ElevenLabs LLM enum yet; once it's added we'll re-evaluate.
+- Help / agent-info / GOTCHAS / README all aligned on the new default.
+
 ## [0.3.1] — 2026-04-21
 
 Post-ship review of v0.3.0 (Codex, gpt-5.4 xhigh) caught six real bugs +
