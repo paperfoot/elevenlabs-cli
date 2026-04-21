@@ -12,11 +12,17 @@
 /v1/convai/batch-calling/{X}                                                      -- src/commands/phone/batch/show.rs
 /v1/convai/batch-calling/{X}/cancel                                               -- src/commands/phone/batch/cancel.rs
 /v1/convai/batch-calling/{X}/retry                                                -- src/commands/phone/batch/retry.rs
+/v1/convai/conversation/get-signed-url                                            -- src/commands/agents/signed_url.rs
 /v1/convai/conversations                                                          -- src/commands/conversations.rs
 /v1/convai/conversations/{X}                                                      -- src/commands/conversations.rs
+/v1/convai/conversations/{X}/audio                                                -- src/commands/conversations.rs
+/v1/convai/knowledge-base                                                         -- src/commands/agents/knowledge.rs
 /v1/convai/knowledge-base/file                                                    -- src/commands/agents/knowledge.rs
+/v1/convai/knowledge-base/search                                                  -- src/commands/agents/knowledge.rs
 /v1/convai/knowledge-base/text                                                    -- src/commands/agents/knowledge.rs
 /v1/convai/knowledge-base/url                                                     -- src/commands/agents/knowledge.rs
+/v1/convai/knowledge-base/{X}/refresh                                             -- src/commands/agents/knowledge.rs
+/v1/convai/llm/list                                                               -- src/commands/agents/llms.rs
 /v1/convai/phone-numbers                                                          -- src/commands/phone/call.rs
 /v1/convai/phone-numbers                                                          -- src/commands/phone/list.rs
 /v1/convai/sip-trunk/outbound-call                                                -- src/commands/phone/call.rs
@@ -43,7 +49,7 @@
 /v1/dubbing/{X}                                                                   -- src/commands/dubbing/delete.rs
 /v1/dubbing/{X}                                                                   -- src/commands/dubbing/show.rs
 /v1/dubbing/{X}/audio/{X}                                                         -- src/commands/dubbing/audio.rs
-/v1/dubbing/{X}/transcript/{X}/format/{X}                                         -- src/commands/dubbing/transcript.rs
+/v1/dubbing/{X}/transcripts/{X}/format/{X}                                        -- src/commands/dubbing/transcript.rs
 /v1/forced-alignment                                                              -- src/commands/align.rs
 /v1/history                                                                       -- src/commands/history.rs
 /v1/history/{X}                                                                   -- src/commands/history.rs
@@ -91,4 +97,4 @@
 /v1/voices/{}/edit                                                                -- src/commands/voices/edit.rs
 /v1/voices/{}/samples/{}                                                          -- src/commands/voices/edit.rs
 
-Total unique: 75
+Total unique: 81

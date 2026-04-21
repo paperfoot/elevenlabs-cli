@@ -8,7 +8,7 @@
 //!   - GET    /v1/dubbing/{id}                          — dubbing::show
 //!   - DELETE /v1/dubbing/{id}                          — dubbing::delete
 //!   - GET    /v1/dubbing/{id}/audio/{lang}             — dubbing::audio
-//!   - GET    /v1/dubbing/{id}/transcript/{lang}/format/{fmt}  (dubbing::transcript)
+//!   - GET    /v1/dubbing/{id}/transcripts/{lang}/format/{fmt}  (dubbing::transcript)
 //!   - POST   /v1/dubbing/resource/{id}/transcribe
 //!   - POST   /v1/dubbing/resource/{id}/translate
 //!   - POST   /v1/dubbing/resource/{id}/dub

@@ -1,10 +1,14 @@
 //! `dubbing get-transcript <dubbing_id> <language_code> --format <srt|webvtt|json>`
-//! — GET /v1/dubbing/{id}/transcript/{lang}/format/{fmt}
+//! — GET /v1/dubbing/{id}/transcripts/{lang}/format/{format_type}
 //!
-//! The format-in-path transcript endpoint is the preferred shape as of
-//! Jan 2026. Per the SDK it returns `text/*` for srt/webvtt and
-//! `application/json` for json. We stream bytes and pick an extension to
-//! match `--format` unless the caller overrides via `--output`.
+//! The format-in-path transcript endpoint lives under the plural
+//! `/transcripts/` segment per the ElevenLabs OpenAPI spec (operationId
+//! `get_dubbing_transcripts`). v0.2.x of this CLI called the singular
+//! `/transcript/` path, which returns a raw transcript instead of the
+//! formatted one — fixed in v0.3.0. Per the SDK it returns `text/*` for
+//! srt/webvtt and `application/json` for json. We stream bytes and pick
+//! an extension to match `--format` unless the caller overrides via
+//! `--output`.
 
 use std::path::PathBuf;
 
@@ -34,7 +38,7 @@ pub async fn run(
         }
     };
 
-    let path = format!("/v1/dubbing/{dubbing_id}/transcript/{language_code}/format/{format}");
+    let path = format!("/v1/dubbing/{dubbing_id}/transcripts/{language_code}/format/{format}");
     let bytes = super::get_bytes(client, &path).await?;
     let bytes_written = bytes.len();
 

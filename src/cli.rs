@@ -1139,6 +1139,20 @@ pub enum AgentsAction {
         agent_id: String,
     },
 
+    /// List the LLMs the Agents backend supports. Hit this before
+    /// `agents create --llm …` to avoid the "accepted by clap, rejected
+    /// at conversation time" footgun.
+    Llms,
+
+    /// Issue a pre-authenticated signed URL for a widget / web session
+    /// with the given agent. The URL is short-lived and can be embedded
+    /// directly in a browser session.
+    #[command(name = "signed-url")]
+    SignedUrl {
+        /// Agent ID
+        agent_id: String,
+    },
+
     /// Create a new agent
     #[command(visible_alias = "new", after_long_help = crate::help::AGENTS_CREATE_HELP)]
     Create {
@@ -1269,6 +1283,49 @@ pub enum AgentsAction {
         #[command(subcommand)]
         action: AgentsToolsAction,
     },
+
+    /// Browse / search / refresh the workspace knowledge base. Use
+    /// `agents add-knowledge` to add + attach; these subcommands inspect
+    /// what's already in the workspace.
+    Knowledge {
+        #[command(subcommand)]
+        action: AgentsKnowledgeAction,
+    },
+}
+
+#[derive(Subcommand, Debug, Clone)]
+pub enum AgentsKnowledgeAction {
+    /// List knowledge-base documents in the workspace
+    #[command(visible_alias = "ls")]
+    List {
+        /// Free-text search across doc names/content
+        #[arg(long)]
+        search: Option<String>,
+        /// Page size (1-100)
+        #[arg(long, default_value = "30")]
+        page_size: u32,
+        /// Pagination cursor
+        #[arg(long)]
+        cursor: Option<String>,
+    },
+
+    /// Search knowledge-base content (chunk-level, used for RAG debug)
+    Search {
+        /// Query string
+        query: String,
+        /// Restrict to a specific document ID
+        #[arg(long)]
+        document_id: Option<String>,
+        /// Max results to return
+        #[arg(long, default_value = "10")]
+        limit: u32,
+    },
+
+    /// Refresh a URL-backed document (re-fetches the source page)
+    Refresh {
+        /// Knowledge-base document ID
+        document_id: String,
+    },
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -1348,6 +1405,16 @@ pub enum ConversationsAction {
         /// Conversation ID
         conversation_id: String,
     },
+
+    /// Download the audio recording for a conversation. Writes to
+    /// ./conv_<id>.mp3 by default; override with --output.
+    Audio {
+        /// Conversation ID
+        conversation_id: String,
+        /// Output path (default: conv_<id>.mp3)
+        #[arg(long, short = 'o')]
+        output: Option<String>,
+    },
 }
 
 // ── Phone ──────────────────────────────────────────────────────────────────
@@ -1377,6 +1444,29 @@ pub enum PhoneAction {
         /// to load from a file: '@vars.json'. Keep under 4KB.
         #[arg(long = "dynamic-variables", value_name = "JSON_OR_@FILE")]
         dynamic_variables: Option<String>,
+
+        /// Full `conversation_initiation_client_data` object as JSON (or
+        /// @file.json). Spec-backed siblings supported: `dynamic_variables`,
+        /// `conversation_config_override` (override agent.first_message,
+        /// tts.voice_id/stability/speed, agent.prompt.prompt/llm, etc.
+        /// per-call), `custom_llm_extra_body`, `user_id`, `source_info`,
+        /// `branch_id`, `environment`, `starting_workflow_node_id`. When
+        /// both this and --dynamic-variables are passed, the latter is
+        /// merged into the client-data object.
+        #[arg(long = "client-data", value_name = "JSON_OR_@FILE")]
+        client_data: Option<String>,
+
+        /// Record the call (Twilio / SIP trunk). Maps to the outbound-call
+        /// body's `call_recording_enabled`. Defaults to the server's own
+        /// default when omitted.
+        #[arg(long)]
+        record: bool,
+
+        /// Max seconds to ring the callee before giving up. Maps to
+        /// `telephony_call_config.ringing_timeout_secs` on the
+        /// outbound-call body.
+        #[arg(long, value_name = "SECS")]
+        ringing_timeout_secs: Option<u32>,
     },
 
     /// Batch outbound calls (CSV or JSON recipients)

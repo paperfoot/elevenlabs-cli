@@ -1,4 +1,6 @@
-//! conversations list / show
+//! conversations list / show / audio
+
+use std::path::PathBuf;
 
 use crate::cli::ConversationsAction;
 use crate::client::ElevenLabsClient;
@@ -16,6 +18,10 @@ pub async fn dispatch(ctx: Ctx, action: ConversationsAction) -> Result<(), AppEr
             cursor,
         } => list(ctx, &client, agent_id, page_size, cursor).await,
         ConversationsAction::Show { conversation_id } => show(ctx, &client, &conversation_id).await,
+        ConversationsAction::Audio {
+            conversation_id,
+            output,
+        } => audio(ctx, &client, &conversation_id, output).await,
     }
 }
 
@@ -88,4 +94,63 @@ async fn show(ctx: Ctx, client: &ElevenLabsClient, conversation_id: &str) -> Res
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
     });
     Ok(())
+}
+
+/// Download the audio recording for a conversation to disk.
+/// `GET /v1/convai/conversations/{conversation_id}/audio` returns the raw
+/// mp3 bytes; we stream them to the output path and report size.
+async fn audio(
+    ctx: Ctx,
+    client: &ElevenLabsClient,
+    conversation_id: &str,
+    output: Option<String>,
+) -> Result<(), AppError> {
+    let path = format!("/v1/convai/conversations/{conversation_id}/audio");
+    let bytes = get_bytes(client, &path).await?;
+    let out_path: PathBuf = match output {
+        Some(p) => PathBuf::from(p),
+        None => PathBuf::from(format!("conv_{conversation_id}.mp3")),
+    };
+    let bytes_written = bytes.len();
+    tokio::fs::write(&out_path, &bytes)
+        .await
+        .map_err(AppError::Io)?;
+
+    let result = serde_json::json!({
+        "conversation_id": conversation_id,
+        "output": out_path.display().to_string(),
+        "bytes_written": bytes_written,
+    });
+    output::print_success_or(ctx, &result, |r| {
+        use owo_colors::OwoColorize;
+        println!(
+            "{} {} ({:.1} KB)",
+            "+".green(),
+            r["output"].as_str().unwrap_or("").bold(),
+            r["bytes_written"].as_f64().unwrap_or(0.0) / 1024.0,
+        );
+    });
+    Ok(())
+}
+
+/// GET audio bytes. Drives `reqwest` directly because the shared client only
+/// has JSON-returning GET helpers. Errors route through `check_status`-style
+/// logic inline — keep it small since we only need one shape here.
+async fn get_bytes(client: &ElevenLabsClient, path: &str) -> Result<bytes::Bytes, AppError> {
+    let resp = client.http.get(client.url(path)).send().await?;
+    let status = resp.status();
+    if !status.is_success() {
+        let code = status.as_u16();
+        let body = resp.text().await.unwrap_or_default();
+        let message = crate::client::redact_secrets(&body);
+        return Err(match code {
+            401 | 403 => AppError::AuthFailed(message),
+            429 => AppError::RateLimited(message),
+            _ => AppError::Api {
+                status: code,
+                message,
+            },
+        });
+    }
+    Ok(resp.bytes().await?)
 }

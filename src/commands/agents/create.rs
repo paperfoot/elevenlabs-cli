@@ -86,7 +86,12 @@ pub async fn run(
                 "temperature": temperature,
             },
             "first_message": first_message,
-            "dynamic_variables": { "dynamic_variable_placeholders": {} }
+            "dynamic_variables": { "dynamic_variable_placeholders": {} },
+            // Per OpenAPI spec (AgentConfigAPIModel), this field lives on
+            // agent.*, not turn.*. v0.2.1 / v0.2.2 wrote it under turn which
+            // the server silently dropped — so the "greeting can't be cut
+            // off" guarantee never took effect. Fixed in v0.3.0.
+            "disable_first_message_interruptions": true
         },
         "asr": {
             "quality": "high",
@@ -104,18 +109,14 @@ pub async fn run(
             "similarity_boost": 0.8
         },
         "turn": {
-            // turn_v2 is the proven-working detector as of 2026-04. turn_v3
-            // exists (see ElevenLabs docs → eleven-agents changelog) but
-            // real-world dialing shows it swallows short turn-ends on some
-            // LLM configs, which sends the agent into silence. Opt in via a
-            // PATCH once you've verified it for your agent.
+            // turn_model is not in the checked-in OpenAPI spec, but the live
+            // API enforces the enum {turn_v2, turn_v3} (verified via probe,
+            // 2026-04-21). turn_v2 is the proven-working detector; turn_v3
+            // was observed swallowing short turn-ends on some LLM configs.
+            // Treat this as an empirical knob, not a spec-backed one.
             "turn_model": "turn_v2",
             "turn_timeout": 7,
-            "turn_eagerness": "normal",
-            // Prevents tiny user backchannels ("yes", "mm-hmm") from
-            // cutting off the greeting — the single most common
-            // footgun on the first ring.
-            "disable_first_message_interruptions": true
+            "turn_eagerness": "normal"
         },
         "conversation": {
             "max_duration_seconds": max_duration_seconds,

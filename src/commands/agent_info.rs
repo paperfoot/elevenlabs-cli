@@ -144,6 +144,11 @@ pub fn run() {
             "user subscription": "Subscription tier, usage, and remaining characters",
             "agents list": "List conversational AI agents",
             "agents show <agent_id>": "Get agent details",
+            "agents llms": "List LLMs the Agents backend currently accepts for conversation_config.agent.prompt.llm. Hit this before `agents create --llm …` to avoid the 'accepted by clap, silently fails at conversation time' footgun.",
+            "agents signed-url <agent_id>": "Issue a short-lived signed URL that can be embedded directly in a widget / web session without manual auth-token plumbing. (GET /v1/convai/conversation/get-signed-url)",
+            "agents knowledge list": "List KB documents. Filters: --search, --page-size, --cursor. (aliases: ls)",
+            "agents knowledge search <query>": "Chunk-level content search across the workspace KB. Useful for debugging RAG before your agent goes live. Flags: --document-id, --limit.",
+            "agents knowledge refresh <document_id>": "Re-fetch a URL-backed KB document (e.g. after the source page changes). No-op for file/text-backed docs.",
             "agents create <name>": {
                 "description": "Create a conversational AI agent. See `known_values.agent_tts_model_ids` and `gotchas.agents` before passing --model-id / --llm / --expressive-mode.",
                 "aliases": ["new"],
@@ -181,12 +186,23 @@ pub fn run() {
                     "conversation_config.tts.stability": "0.0-1.0",
                     "conversation_config.tts.similarity_boost": "0.0-1.0",
                     "conversation_config.conversation.max_duration_seconds": "hard call limit in seconds (default 300)",
-                    "conversation_config.turn.turn_model": "turn_v2 | turn_v3 (v3 = newer hybrid, better on speakerphones)",
-                    "conversation_config.turn.turn_timeout": "silence seconds before the agent prompts (default 7)",
-                    "conversation_config.turn.turn_eagerness": "patient | normal | eager — lower = more tolerant of user pauses",
-                    "conversation_config.turn.disable_first_message_interruptions": "true blocks user 'yes/uh-huh' from cutting off the greeting",
-                    "conversation_config.turn.background_voice_detection": "true filters speakerphone echo / room noise (can be too aggressive in loud rooms)",
+                    "conversation_config.turn.turn_model": "turn_v2 | turn_v3 (EMPIRICAL — enforced by the live API but absent from the current OpenAPI spec; treat as unofficial)",
+                    "conversation_config.turn.turn_timeout": "silence seconds before the agent prompts (default 7, range 1-30)",
+                    "conversation_config.turn.turn_eagerness": "patient | normal | eager (default normal)",
+                    "conversation_config.turn.mode": "silence | turn (default turn)",
+                    "conversation_config.turn.initial_wait_time": "seconds the agent waits before speaking at call-start",
+                    "conversation_config.turn.silence_end_call_timeout": "seconds of silence after which the agent hangs up (-1 to disable)",
+                    "conversation_config.turn.soft_timeout_config": "{timeout_seconds, message, use_llm_generated_message} — prompts the user after a short silence before giving up",
+                    "conversation_config.agent.disable_first_message_interruptions": "true blocks user 'yes/uh-huh' from cutting off the greeting (lives on AGENT, not turn — pre-v0.3.0 docs had it wrong)",
+                    "conversation_config.agent.max_conversation_duration_message": "message the agent says when the hard duration limit hits",
+                    "conversation_config.agent.prompt.reasoning_effort": "none | minimal | low | medium | high | xhigh (only honoured by reasoning-capable LLMs)",
+                    "conversation_config.agent.prompt.thinking_budget": "max tokens for <think> output on reasoning models",
+                    "conversation_config.agent.prompt.max_tokens": "per-turn LLM output cap",
+                    "conversation_config.agent.prompt.ignore_default_personality": "true strips ElevenLabs' default system preamble",
+                    "conversation_config.agent.prompt.rag": "{enabled, embedding_model, max_documents_length, ...} — RAG over the attached knowledge_base",
                     "conversation_config.agent.prompt.tools[]": "append {type:'system', name:'voicemail_detection', description:''} to enable voicemail hang-up; add voicemail_message:'...' on that entry to leave a message instead",
+                    "conversation_config.vad.background_voice_detection": "true filters speakerphone echo / room noise (lives on VAD, not turn — pre-v0.3.0 docs had it wrong)",
+                    "platform_settings.evaluation.criteria[]": "post-call evaluation rubrics for automated QA",
                     "name": "TOP-LEVEL field, not inside conversation_config — agent display name"
                 }
             },
@@ -201,13 +217,17 @@ pub fn run() {
             "agents tools deps <tool_id>": "List agents that depend on this tool (aliases: dependents)",
             "conversations list": "List agent conversations",
             "conversations show <conversation_id>": "Get a conversation with transcript",
+            "conversations audio <conversation_id>": "Download the call audio recording. Default output: conv_<id>.mp3; override with -o. (GET /v1/convai/conversations/{id}/audio)",
             "phone list": "List phone numbers",
             "phone call <agent_id>": {
                 "description": "Place an outbound call via an agent. Dispatches to Twilio or SIP-trunk based on the provider field of --from-id.",
                 "options": [
                     "--from-id <phone_number_id> (required)",
                     "--to <E.164 number> (required, e.g. +14155551212)",
-                    "--dynamic-variables <JSON object or @file.json> — per-call values for {{placeholders}} in the agent prompt"
+                    "--dynamic-variables <JSON object or @file.json> — per-call {{placeholders}}; merges into --client-data when both are passed",
+                    "--client-data <JSON object or @file.json> — full conversation_initiation_client_data (conversation_config_override, user_id, source_info, branch_id, environment, starting_workflow_node_id, custom_llm_extra_body, dynamic_variables)",
+                    "--record — enable call_recording_enabled on Twilio / SIP trunk",
+                    "--ringing-timeout-secs <n> — cap the ring time before the call is abandoned"
                 ]
             },
             "phone batch submit": "Submit a batch of outbound calls. Required: --agent, --phone-number, --recipients <path|->. CSV or JSON. Optional: --name, --scheduled-time-unix.",
@@ -271,11 +291,11 @@ pub fn run() {
         "gotchas": {
             "agents": GOTCHAS,
             "turn_taking": [
-                "Allowed turn_model values: 'turn_v2', 'turn_v3'. This CLI's `agents create` scaffolds turn_v2 because in real-world dialing (2026-04) turn_v3 was observed swallowing short turn-ends when paired with certain LLMs — the agent heard the user but never took its turn. turn_v3 is newer and better on noise/backchannels; opt into it per-agent once you've verified the full stack on a test call.",
-                "Allowed turn_eagerness values: 'patient' | 'normal' | 'eager' (API default 'normal'). 'patient' is tempting for thoughtful users but empirically over-suppresses on speakerphone — the agent stops taking turns at all. 'normal' is the safe default; move to 'patient' only after verifying via test dial.",
-                "turn_timeout is in seconds, range 1-30. Server default behaves like ~7s. 5-10s for casual, 10-30s for thoughtful. Do not set above 15s without a test dial: users will hang up thinking the line died.",
-                "disable_first_message_interruptions = true stops tiny acknowledgements ('yes', 'mm-hmm') from cutting off the greeting. This CLI's `agents create` defaults it to true. PATCH it to true on any agent that was created through the ElevenLabs dashboard and has a greeting-interruption problem.",
-                "background_voice_detection = true filters speakerphone echo / room noise — but in real-world testing it also mutes the user's own voice on speakerphones, so the agent goes silent after they answer. Leave it FALSE by default and only enable it after a test-call verifies the user's voice still gets through.",
+                "turn_model lives at conversation_config.turn.turn_model. Valid values: 'turn_v2', 'turn_v3'. EMPIRICAL — the live API enforces these two values but the current OpenAPI spec doesn't reference the field; treat as unofficial. This CLI's `agents create` scaffolds turn_v2 because in real-world dialing (2026-04) turn_v3 was observed swallowing short turn-ends on some LLM configs — the agent heard the user but never took its turn.",
+                "turn_eagerness: 'patient' | 'normal' | 'eager' (API default 'normal'). 'patient' empirically over-suppresses on speakerphone — the agent stops taking turns. 'normal' is the safe default.",
+                "turn_timeout: seconds, range 1-30. Server default behaves like ~7s. Don't set above 15s without a test dial; users hang up thinking the line died.",
+                "disable_first_message_interruptions lives on conversation_config.AGENT.disable_first_message_interruptions (spec schema AgentConfigAPIModel), NOT conversation_config.turn.*. Pre-v0.3.0 of this CLI wrote it under turn; the server silently dropped it. If you upgraded from 0.2.1/0.2.2 and rely on the greeting-not-interrupted behaviour, `agents update --patch` with the correct agent.* path or recreate the agent with v0.3.0+.",
+                "background_voice_detection lives on conversation_config.VAD.background_voice_detection (spec schema VADConfig), NOT conversation_config.turn.*. Real-world testing showed true also mutes the user's own voice on speakerphones — leave it false unless a test dial proves otherwise.",
                 "When a call connects but the agent never takes its next turn, always inspect `conversations show <conv_id>`: llm_usage.model_usage with 0 output_tokens on the expected LLM = the --llm was rejected by the backend and a fallback was tried that never completed. Swap the LLM first, not the turn settings."
             ],
             "outbound_calls": [

@@ -1,6 +1,6 @@
 [package]
 name = "elevenlabs"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Agent-friendly CLI for the ElevenLabs AI audio platform (TTS, STT, voices, agents, music)"

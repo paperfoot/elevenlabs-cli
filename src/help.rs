@@ -326,16 +326,24 @@ pub const AGENTS_UPDATE_HELP: &str = "TIPS
    eleven_v3_conversational in the same patch (or the agent already has
    that value). The CLI pre-scans for this footgun and errors out
    before sending the patch.
- - turn.turn_model valid values: 'turn_v2' | 'turn_v3'. Our scaffold
-   uses turn_v2 (empirically stable in 2026-04). v3 exists but has
-   been observed swallowing turn-ends — test-dial before committing.
+ - turn.turn_model values: 'turn_v2' | 'turn_v3'. EMPIRICAL — enforced
+   by the live API, absent from the current OpenAPI spec. Our scaffold
+   uses turn_v2 (empirically stable in 2026-04); v3 was observed
+   swallowing turn-ends on some LLM configs.
  - turn.turn_eagerness: 'patient' | 'normal' | 'eager' (default
    'normal'). 'patient' over-suppresses on speakerphones.
- - turn.background_voice_detection=true filters room noise but in
-   real calls it has been observed muting the user's own voice on
-   speakerphones — leave it false unless a test-dial proves otherwise.
- - turn.disable_first_message_interruptions=true prevents 'yes' /
-   'mm-hmm' backchannels from cutting off the greeting.
+ - turn.mode: 'silence' | 'turn' (default 'turn'). turn.initial_wait_time,
+   turn.silence_end_call_timeout, and turn.soft_timeout_config are all
+   spec-backed knobs for tuning ringing/idle behaviour.
+ - disable_first_message_interruptions=true prevents 'yes' / 'mm-hmm'
+   backchannels from cutting off the greeting. It lives at
+   conversation_config.AGENT.disable_first_message_interruptions
+   (not .turn.*) — pre-v0.3.0 of this CLI had the wrong path and the
+   server silently dropped it.
+ - background_voice_detection=true filters speakerphone room noise. It
+   lives at conversation_config.VAD.background_voice_detection (not
+   .turn.*). Real calls showed it also mutes the user's own voice on
+   speakerphones — leave false unless a test dial proves otherwise.
  - Every PATCH is non-destructive — use `agents show` to read current
    state, then PATCH the delta. Don't re-post the full object unless
    you mean to reset fields.
@@ -392,12 +400,21 @@ pub const PHONE_CALL_HELP: &str = "TIPS
    provider field on --from-id, so the phone number record drives the
    routing — you don't pick the provider yourself.
  - --to must be E.164 (leading +, country code, no punctuation).
- - Pass per-call variables via --dynamic-variables '{\"name\":\"Alex\"}'.
-   Agent prompts can interpolate placeholders like {{name}}. Must be a
-   JSON object (not array / string). Prefix with `@` to load from a
-   file: --dynamic-variables @vars.json. Keep under ~4KB.
+ - --dynamic-variables '{\"name\":\"Alex\"}' sets per-call {{name}} etc.
+   in the agent prompt. Must be a JSON object. Prefix with `@` for
+   file loading.
+ - --client-data takes the FULL conversation_initiation_client_data
+   object — use this when you need to override agent.first_message,
+   tts.voice_id/stability/speed, agent.prompt.prompt/llm, or pass
+   user_id / source_info / branch_id / environment on a per-call
+   basis. If both flags are passed, --dynamic-variables is merged
+   into the client-data object (it overwrites same-named entries).
+ - --record flips call_recording_enabled on. --ringing-timeout-secs
+   caps how long the callee's phone rings before the call is
+   abandoned (telephony_call_config.ringing_timeout_secs).
  - The returned conversation_id shows up in `conversations list` once
-   the call connects. Poll `conversations show <id>` for the transcript.
+   the call connects. Poll `conversations show <id>` for the transcript;
+   `conversations audio <id> -o call.mp3` downloads the recording.
    If the call ended silent after one turn, inspect the transcript AND
    the llm_usage.model_usage block — 0 output tokens with a fallback
    model means the agent's --llm was rejected by the backend.
@@ -410,13 +427,25 @@ EXAMPLES
  $ elevenlabs phone call agent_abc --from-id phn_123 --to +14155551212 \\
      --dynamic-variables '{\"customer\":\"Alex\",\"order_id\":\"A-8821\"}'
 
- # Load dynamic context from a file (handy for complex templates)
+ # Override the voice + first message for one call only
  $ elevenlabs phone call agent_abc --from-id phn_123 --to +14155551212 \\
-     --dynamic-variables @vars.json
+     --client-data '{
+        \"conversation_config_override\": {
+          \"tts\": { \"voice_id\": \"JBFqnCBsd6RMkjVDRZzb\" },
+          \"agent\": { \"first_message\": \"Hi Alex, Ellis here.\" }
+        },
+        \"user_id\": \"user_abc\"
+      }' \\
+     --dynamic-variables '{\"customer\":\"Alex\"}'
 
- # Script: fire a call and tail its transcript
+ # Enable recording + cap ring time
+ $ elevenlabs phone call agent_abc --from-id phn_123 --to +14155551212 \\
+     --record --ringing-timeout-secs 25
+
+ # Script: fire a call and tail its transcript + audio
  $ CID=$(elevenlabs phone call ... --json | jq -r '.data.response.conversation_id')
- $ elevenlabs conversations show \"$CID\" --json | jq '.data.transcript'";
+ $ elevenlabs conversations show \"$CID\" --json | jq '.data.transcript'
+ $ elevenlabs conversations audio \"$CID\" -o call.mp3";
 
 // ── Dubbing ────────────────────────────────────────────────────────────────
 

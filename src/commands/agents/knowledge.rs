@@ -219,3 +219,139 @@ fn redact(v: &serde_json::Value) -> String {
         s
     }
 }
+
+// ── list / search / refresh ───────────────────────────────────────────────
+
+/// `agents knowledge list` — `GET /v1/convai/knowledge-base`.
+pub async fn list(
+    ctx: Ctx,
+    client: &ElevenLabsClient,
+    search: Option<String>,
+    page_size: u32,
+    cursor: Option<String>,
+) -> Result<(), AppError> {
+    let mut params: Vec<(&str, String)> = vec![("page_size", page_size.min(100).to_string())];
+    if let Some(s) = search {
+        params.push(("search", s));
+    }
+    if let Some(c) = cursor {
+        params.push(("cursor", c));
+    }
+    let resp: serde_json::Value = client
+        .get_json_with_query("/v1/convai/knowledge-base", &params)
+        .await?;
+    output::print_success_or(ctx, &resp, |v| {
+        use owo_colors::OwoColorize;
+        let docs = v
+            .get("documents")
+            .and_then(|d| d.as_array())
+            .cloned()
+            .unwrap_or_default();
+        if docs.is_empty() {
+            println!("(no knowledge-base documents)");
+            return;
+        }
+        let mut t = comfy_table::Table::new();
+        t.set_header(vec!["ID", "Name", "Type", "Dependent agents"]);
+        for d in &docs {
+            let id = d.get("id").and_then(|x| x.as_str()).unwrap_or("");
+            let name = d.get("name").and_then(|x| x.as_str()).unwrap_or("");
+            let ty = d.get("type").and_then(|x| x.as_str()).unwrap_or("");
+            let deps = d
+                .get("dependent_agents")
+                .and_then(|a| a.as_array())
+                .map(|a| a.len())
+                .unwrap_or(0);
+            t.add_row(vec![
+                id.dimmed().to_string(),
+                name.bold().to_string(),
+                ty.into(),
+                deps.to_string(),
+            ]);
+        }
+        println!("{t}");
+        if let Some(next) = v.get("next_cursor").and_then(|x| x.as_str()) {
+            println!("{} --cursor {}", "more:".dimmed(), next);
+        }
+    });
+    Ok(())
+}
+
+/// `agents knowledge search <query>` — `GET /v1/convai/knowledge-base/search`.
+pub async fn search(
+    ctx: Ctx,
+    client: &ElevenLabsClient,
+    query: String,
+    document_id: Option<String>,
+    limit: u32,
+) -> Result<(), AppError> {
+    let mut params: Vec<(&str, String)> = vec![
+        ("query", query.clone()),
+        ("limit", limit.min(100).to_string()),
+    ];
+    if let Some(d) = document_id {
+        params.push(("document_id", d));
+    }
+    let resp: serde_json::Value = client
+        .get_json_with_query("/v1/convai/knowledge-base/search", &params)
+        .await?;
+    output::print_success_or(ctx, &resp, |v| {
+        use owo_colors::OwoColorize;
+        let hits = v
+            .get("results")
+            .and_then(|r| r.as_array())
+            .cloned()
+            .or_else(|| v.as_array().cloned())
+            .unwrap_or_default();
+        if hits.is_empty() {
+            println!("(no matches for {:?})", query);
+            return;
+        }
+        for (i, hit) in hits.iter().enumerate() {
+            let doc = hit
+                .get("document_name")
+                .or_else(|| hit.get("document_id"))
+                .and_then(|x| x.as_str())
+                .unwrap_or("");
+            let snippet = hit
+                .get("content")
+                .or_else(|| hit.get("chunk"))
+                .and_then(|x| x.as_str())
+                .unwrap_or("");
+            println!(
+                "{} {}  {}",
+                format!("{:>2}.", i + 1).dimmed(),
+                doc.bold(),
+                snippet
+            );
+        }
+    });
+    Ok(())
+}
+
+/// `agents knowledge refresh <document_id>` —
+/// `POST /v1/convai/knowledge-base/{document_id}/refresh`.
+///
+/// Re-fetches a URL-backed document. The doc must have been added via
+/// `agents add-knowledge --url …`; refreshing a file/text-backed doc is a
+/// no-op server-side.
+pub async fn refresh(
+    ctx: Ctx,
+    client: &ElevenLabsClient,
+    document_id: &str,
+) -> Result<(), AppError> {
+    let path = format!("/v1/convai/knowledge-base/{document_id}/refresh");
+    let resp: serde_json::Value = client.post_json(&path, &serde_json::json!({})).await?;
+    output::print_success_or(ctx, &resp, |v| {
+        use owo_colors::OwoColorize;
+        println!(
+            "{} refreshed {}",
+            "~".yellow(),
+            v.get("id")
+                .and_then(|x| x.as_str())
+                .unwrap_or(document_id)
+                .dimmed()
+        );
+    });
+    Ok(())
+}

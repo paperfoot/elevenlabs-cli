@@ -3,6 +3,49 @@
 All notable changes to `elevenlabs-cli` are listed here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org).
 
+## [0.3.0] — 2026-04-21
+
+Driven by an OpenAPI spec audit (Codex, GPT-5.4 xhigh) against the
+upstream spec at `https://api.elevenlabs.io/openapi.json` (snapshot
+committed at `docs/reference/openapi.elevenlabs.json`). The audit
+surfaced two silently-broken defaults from 0.2.1/0.2.2 and a meaningful
+batch of missing commands; both are fixed here.
+
+### Fixed — spec drift
+
+- **P0** `agents create` wrote `conversation_config.turn.disable_first_message_interruptions`. The spec places this field on `conversation_config.agent.*` (schema `AgentConfigAPIModel`). Server was silently dropping it — so the "greeting can't be cut off by backchannels" fix shipped in 0.2.1 never took effect. Fixed in the scaffold, `AGENTS_UPDATE_HELP`, and `agent-info gotchas.turn_taking`.
+- **P0** `AGENTS_UPDATE_HELP` and `agent-info gotchas.turn_taking` pointed users at `conversation_config.turn.background_voice_detection`. The spec places it on `conversation_config.vad.*` (schema `VADConfig`). Anyone following our docs was patching a no-op path. Fixed both.
+- **P0** `turn_model` is enforced by the live API (enum `turn_v2`|`turn_v3`) but absent from the current OpenAPI spec. We now label the field as empirical / not spec-mounted everywhere it's documented so nobody assumes it's a contract.
+- **P0** `dubbing get-transcript` called `GET /v1/dubbing/{id}/transcript/{lang}/format/{fmt}`. The spec path is `GET /v1/dubbing/{id}/transcripts/{lang}/format/{format_type}` (plural `/transcripts/`, operationId `get_dubbing_transcripts`). The old path returned the raw transcript, not the formatted one. Fixed the route + the three route-matching integration tests.
+
+### Added — new command surfaces
+
+- `agents llms` — `GET /v1/convai/llm/list`. Enumerates the LLMs the Agents backend currently accepts for `conversation_config.agent.prompt.llm`. Call this before `agents create --llm …` to avoid the "accepted by clap, silently fails at conversation time" footgun observed in 0.2.0 (gemini-3.1-pro-preview, etc).
+- `agents signed-url <agent_id>` — `GET /v1/convai/conversation/get-signed-url`. Issues a short-lived pre-authenticated URL that can be embedded directly in a widget / web session.
+- `agents knowledge {list,search,refresh}` — new subcommand tree:
+  - `list` → `GET /v1/convai/knowledge-base` (filters: `--search`, `--page-size`, `--cursor`)
+  - `search <query>` → `GET /v1/convai/knowledge-base/search` (chunk-level content search; flags: `--document-id`, `--limit`)
+  - `refresh <doc_id>` → `POST /v1/convai/knowledge-base/{id}/refresh` (re-fetches URL-backed docs after the source page changes)
+- `conversations audio <conversation_id>` — `GET /v1/convai/conversations/{id}/audio`. Downloads the call audio mp3. Default output `conv_<id>.mp3`; override with `-o`.
+
+### Added — `phone call` per-call override surface
+
+- `phone call --client-data <JSON or @file>` — forwards the full `conversation_initiation_client_data` payload. Spec-backed siblings: `conversation_config_override` (override `agent.first_message`, `tts.voice_id/stability/speed`, `agent.prompt.prompt/llm` per-call), `custom_llm_extra_body`, `user_id`, `source_info`, `branch_id`, `environment`, `starting_workflow_node_id`, `dynamic_variables`. When both `--client-data` and `--dynamic-variables` are passed, the latter is merged into the former.
+- `phone call --record` — flips `call_recording_enabled` on Twilio / SIP-trunk outbound calls.
+- `phone call --ringing-timeout-secs <n>` — maps to `telephony_call_config.ringing_timeout_secs` so callers can bound ring time per call.
+
+### Added — richer `agent-info` + `AGENTS_UPDATE_HELP`
+
+- `agent-info.commands.agents update` now enumerates spec-backed patch paths we previously omitted: `turn.initial_wait_time`, `turn.silence_end_call_timeout`, `turn.soft_timeout_config`, `turn.mode`, `agent.max_conversation_duration_message`, `agent.prompt.{reasoning_effort,thinking_budget,max_tokens,ignore_default_personality,rag}`, `platform_settings.evaluation.criteria[]`.
+- `AGENTS_UPDATE_HELP` documents the corrected field placements (`agent.*` and `vad.*`), the empirical-vs-spec status of `turn_model`, and the additional spec-backed turn/prompt knobs.
+
+### Internal
+
+- New modules: `src/commands/agents/llms.rs`, `src/commands/agents/signed_url.rs`. `src/commands/agents/knowledge.rs` gains `list/search/refresh` alongside the existing `add`.
+- `src/commands/conversations.rs` gains an `audio` handler + a small private `get_bytes` helper that reuses the shared client plus the crate-internal `redact_secrets`.
+- OpenAPI snapshot + refresh script landed in `docs/reference/`. Future audits: `./docs/reference/refresh.sh` regenerates the spec + two inventories.
+- Test suite still green (36 suites). Three dubbing transcript route tests updated to the corrected path.
+
 ## [0.2.2] — 2026-04-21
 
 ### Added — outbound-call ergonomics

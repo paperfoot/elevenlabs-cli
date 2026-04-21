@@ -1,6 +1,7 @@
 //! `dubbing get-transcript --format <srt|webvtt|json>` must route to the
-//! new `/v1/dubbing/{id}/transcript/{lang}/format/{fmt}` endpoint (preferred
-//! shape as of Jan 2026) with the requested format in the path.
+//! `/v1/dubbing/{id}/transcripts/{lang}/format/{format_type}` endpoint
+//! (OpenAPI operationId `get_dubbing_transcripts`, plural `/transcripts/`)
+//! with the requested format in the path.
 
 use assert_cmd::Command as AssertCmd;
 use std::io::Write;
@@ -61,7 +62,7 @@ async fn run_format(fmt: &str, expected_path: &str, body: &'static [u8]) {
 async fn transcript_srt_route() {
     run_format(
         "srt",
-        "/v1/dubbing/dub_abc/transcript/es/format/srt",
+        "/v1/dubbing/dub_abc/transcripts/es/format/srt",
         b"1\n00:00:00,000 --> 00:00:01,000\nhola\n",
     )
     .await;
@@ -71,7 +72,7 @@ async fn transcript_srt_route() {
 async fn transcript_webvtt_route() {
     run_format(
         "webvtt",
-        "/v1/dubbing/dub_abc/transcript/es/format/webvtt",
+        "/v1/dubbing/dub_abc/transcripts/es/format/webvtt",
         b"WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nhola\n",
     )
     .await;
@@ -81,7 +82,7 @@ async fn transcript_webvtt_route() {
 async fn transcript_json_route() {
     run_format(
         "json",
-        "/v1/dubbing/dub_abc/transcript/es/format/json",
+        "/v1/dubbing/dub_abc/transcripts/es/format/json",
         br#"{"segments":[{"text":"hola","start":0.0,"end":1.0}]}"#,
     )
     .await;
