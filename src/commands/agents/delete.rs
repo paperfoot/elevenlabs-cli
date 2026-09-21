@@ -29,6 +29,6 @@ pub async fn run(
     output::print_success_or(ctx, &result, |_| {
         use owo_colors::OwoColorize;
         println!("{} deleted agent {}", "-".red(), agent_id.dimmed());
-    });
+    })?;
     Ok(())
 }

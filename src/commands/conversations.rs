@@ -83,7 +83,7 @@ async fn list(
         if let Some(next) = v.get("next_cursor").and_then(|x| x.as_str()) {
             println!("{} --cursor {}", "more:".dimmed(), next);
         }
-    });
+    })?;
     Ok(())
 }
 
@@ -92,7 +92,7 @@ async fn show(ctx: Ctx, client: &ElevenLabsClient, conversation_id: &str) -> Res
     let resp: serde_json::Value = client.get_json(&path).await?;
     output::print_success_or(ctx, &resp, |v| {
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
-    });
+    })?;
     Ok(())
 }
 
@@ -129,6 +129,6 @@ async fn audio(
             r["output"].as_str().unwrap_or("").bold(),
             r["bytes_written"].as_f64().unwrap_or(0.0) / 1024.0,
         );
-    });
+    })?;
     Ok(())
 }

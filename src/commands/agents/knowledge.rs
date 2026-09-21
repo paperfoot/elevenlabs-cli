@@ -176,7 +176,7 @@ pub async fn add(
             r["agent_id"].as_str().unwrap_or("").dimmed(),
             doc_id.dimmed()
         );
-    });
+    })?;
     Ok(())
 }
 
@@ -273,7 +273,7 @@ pub async fn list(
         if let Some(next) = v.get("next_cursor").and_then(|x| x.as_str()) {
             println!("{} --cursor {}", "more:".dimmed(), next);
         }
-    });
+    })?;
     Ok(())
 }
 
@@ -361,7 +361,7 @@ pub async fn search(
         if let Some(next) = v.get("next_cursor").and_then(|x| x.as_str()) {
             println!("{} next page cursor: {}", "more:".dimmed(), next);
         }
-    });
+    })?;
     Ok(())
 }
 
@@ -388,6 +388,6 @@ pub async fn refresh(
                 .unwrap_or(document_id)
                 .dimmed()
         );
-    });
+    })?;
     Ok(())
 }

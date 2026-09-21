@@ -11,6 +11,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, id: &str) -> Result<(), Ap
     let resp: serde_json::Value = client.get_json(&path).await?;
     output::print_success_or(ctx, &resp, |v| {
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
-    });
+    })?;
     Ok(())
 }

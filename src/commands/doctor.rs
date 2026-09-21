@@ -99,7 +99,7 @@ pub async fn run(ctx: Ctx, opts: DoctorOptions) -> Result<(), AppError> {
     let report = collect(&opts).await;
     let had_fail = report.summary.fail > 0;
 
-    output::print_success_or(ctx, &report, |r| human_print(ctx, r));
+    output::print_success_or(ctx, &report, |r| human_print(ctx, r))?;
 
     if had_fail {
         // `doctor` is the one place where we intentionally bypass the

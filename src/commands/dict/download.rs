@@ -86,7 +86,7 @@ pub async fn run(
             v["bytes"],
             v["file"].as_str().unwrap_or("").bold()
         );
-    });
+    })?;
     Ok(())
 }
 

@@ -115,7 +115,7 @@ pub async fn run(
             r["stems_written"].as_array().map(|a| a.len()).unwrap_or(0),
             r["output_dir"].as_str().unwrap_or("").bold()
         );
-    });
+    })?;
     Ok(())
 }
 

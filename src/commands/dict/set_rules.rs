@@ -43,6 +43,6 @@ pub async fn run(
         if let Some(ver) = v.get("version_id").and_then(|x| x.as_str()) {
             println!("  new version: {ver}");
         }
-    });
+    })?;
     Ok(())
 }

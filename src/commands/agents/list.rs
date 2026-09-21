@@ -34,6 +34,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient) -> Result<(), AppError> {
             ]);
         }
         println!("{t}");
-    });
+    })?;
     Ok(())
 }

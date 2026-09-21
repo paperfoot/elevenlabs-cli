@@ -1,9 +1,14 @@
 //! Machine-readable capability manifest. Agents call this once to bootstrap.
 
 use crate::commands::agents::agent_config::{AGENT_TTS_MODEL_IDS, GOTCHAS};
+use crate::{cli::Cli, error::AppError, output};
+use clap::CommandFactory;
 
-pub fn run() {
-    let info = serde_json::json!({
+pub fn run(command: Option<&str>) -> Result<(), AppError> {
+    // Validate against the real parser, without executing commands or loading config.
+    // Filters deliberately use canonical paths; invocation aliases still work normally.
+    let selected = command.map(canonical_path).transpose()?;
+    let mut info = serde_json::json!({
         "name": env!("CARGO_PKG_NAME"),
         "binary": "elevenlabs",
         "version": env!("CARGO_PKG_VERSION"),
@@ -246,8 +251,9 @@ pub fn run() {
             "history list": "List generation history. Filters: --start-after <id>, --voice-id, --model-id, --before <unix>, --after <unix>, --sort-direction {asc|desc}, --search, --source {TTS|STS}.",
             "history delete <id>": "Delete a history item",
             "agent-info": {
-                "description": "This manifest",
-                "aliases": ["info"]
+                "description": "Capability manifest; use --command for one command or group",
+                "aliases": ["info"],
+                "options": ["--command <PATH>"]
             },
             "skill install": "Install skill file to Claude/Codex/Gemini directories",
             "skill status": "Check skill installation status",
@@ -255,7 +261,7 @@ pub fn run() {
             "config path": "Show config file path",
             "config set <key> <value>": "Set a config key",
             "config check": "Verify the configured API key works",
-            "config init": "Interactive first-time init",
+            "config init": "Save an API key with --api-key (no interactive prompts)",
             "update": "Self-update from GitHub Releases",
             "update --check": "Check for updates without installing"
         },
@@ -277,6 +283,7 @@ pub fn run() {
         },
         "config": {
             "path": crate::config::config_path().display().to_string(),
+            "env_prefix": "ELEVENLABS",
             "env_vars": {
                 "ELEVENLABS_API_KEY": "Fallback API key used when config.toml has no api_key. Since v0.1.6 the saved config file wins; the env var is a fallback only.",
                 "ELEVENLABS_API_BASE_URL": "Override API base URL (default https://api.elevenlabs.io)",
@@ -308,8 +315,40 @@ pub fn run() {
         "auth_env_var": "ELEVENLABS_API_KEY",
         "api_docs": "https://elevenlabs.io/docs/api-reference"
     });
-    println!(
-        "{}",
-        serde_json::to_string_pretty(&info).unwrap_or_else(|_| "{}".to_string())
-    );
+    if let Some(path) = selected {
+        // Keep the established manifest shape and all metadata. Legacy command
+        // keys include argument syntax, so match only at a space boundary.
+        let prefix = format!("{path} ");
+        if let Some(commands) = info["commands"].as_object_mut() {
+            let exact = commands.contains_key(&path);
+            commands.retain(|key, _| key == &path || (!exact && key.starts_with(&prefix)));
+            if commands.is_empty() {
+                return Err(invalid_path(&path));
+            }
+        }
+    }
+    output::print_json(&info)
+}
+
+fn invalid_path(path: &str) -> AppError {
+    AppError::bad_input_with(
+        format!("Unknown or empty command path: {path:?}"),
+        "List canonical commands with: elevenlabs --help; inspect one with: elevenlabs agent-info --command tts",
+    )
+}
+
+fn canonical_path(path: &str) -> Result<String, AppError> {
+    let root = Cli::command();
+    let mut node = &root;
+    let words: Vec<_> = path.split_whitespace().collect();
+    if words.is_empty() {
+        return Err(invalid_path(path));
+    }
+    for word in &words {
+        node = node
+            .get_subcommands()
+            .find(|child| child.get_name() == *word)
+            .ok_or_else(|| invalid_path(path))?;
+    }
+    Ok(words.join(" "))
 }

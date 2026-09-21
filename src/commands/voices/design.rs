@@ -143,7 +143,7 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: DesignArgs) -> Resul
             "\nUse {} to save one to your library.",
             "elevenlabs voices save-preview <id> <name> <description>".bold()
         );
-    });
+    })?;
     Ok(())
 }
 

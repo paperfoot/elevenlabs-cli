@@ -131,7 +131,7 @@ async fn isolate(
             r.output.bold(),
             r.bytes_written as f64 / 1024.0
         );
-    });
+    })?;
     Ok(())
 }
 
@@ -271,7 +271,7 @@ async fn convert(
             r["bytes_written"].as_f64().unwrap_or(0.0) / 1024.0,
             r["voice_id"].as_str().unwrap_or("").dimmed()
         );
-    });
+    })?;
     Ok(())
 }
 

@@ -25,7 +25,9 @@ use output::{Ctx, Format};
 /// honoured even on help, version, and parse-error paths where clap hasn't
 /// populated the Cli struct yet.
 fn has_json_flag() -> bool {
-    std::env::args_os().any(|a| a == "--json")
+    std::env::args_os()
+        .take_while(|a| a != "--")
+        .any(|a| a == "--json")
 }
 
 fn main() {
@@ -42,7 +44,10 @@ fn main() {
                 let format = Format::detect(json_flag);
                 match format {
                     Format::Json => {
-                        output::print_help_json(e);
+                        if let Err(error) = output::print_help_json(e) {
+                            output::print_error(format, &error);
+                            std::process::exit(error.exit_code());
+                        }
                         std::process::exit(0);
                     }
                     Format::Human => e.exit(),
@@ -57,6 +62,15 @@ fn main() {
     };
 
     let ctx = Ctx::new(cli.json, cli.quiet);
+
+    // Discovery is entirely local and does not need Tokio's worker threads.
+    if let Commands::AgentInfo { command } = &cli.command {
+        if let Err(error) = commands::agent_info::run(command.as_deref()) {
+            output::print_error(ctx.format, &error);
+            std::process::exit(error.exit_code());
+        }
+        return;
+    }
 
     // Construct a Tokio runtime once for commands that need HTTP.
     let rt = match tokio::runtime::Runtime::new() {
@@ -73,10 +87,7 @@ fn main() {
     let result = rt.block_on(async move {
         match cli.command {
             // Meta / framework commands
-            Commands::AgentInfo => {
-                commands::agent_info::run();
-                Ok(())
-            }
+            Commands::AgentInfo { command } => commands::agent_info::run(command.as_deref()),
             Commands::Skill { action } => match action {
                 SkillAction::Install => commands::skill::install(ctx),
                 SkillAction::Status => commands::skill::status(ctx),

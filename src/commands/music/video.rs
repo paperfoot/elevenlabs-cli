@@ -96,6 +96,6 @@ pub async fn run(
             r["output"].as_str().unwrap_or("").bold(),
             r["bytes_written"].as_f64().unwrap_or(0.0) / 1024.0
         );
-    });
+    })?;
     Ok(())
 }

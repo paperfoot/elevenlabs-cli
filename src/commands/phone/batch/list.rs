@@ -113,6 +113,6 @@ pub async fn run(
                 println!("\nnext page: --cursor {next}");
             }
         }
-    });
+    })?;
     Ok(())
 }

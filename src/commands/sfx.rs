@@ -92,6 +92,6 @@ pub async fn run(ctx: Ctx, args: SfxArgs) -> Result<(), AppError> {
                 .map(|d| format!("{d:.1}"))
                 .unwrap_or_else(|| "auto".into()),
         );
-    });
+    })?;
     Ok(())
 }

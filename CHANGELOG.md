@@ -5,8 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 
 ## [0.3.3] — 2026-09-21
 
+### Added
+
+- `agent-info --command PATH` selects a canonical command or group without
+  loading credentials, making API calls, or starting a Tokio runtime. Existing
+  manifest keys and top-level metadata remain compatible.
+- Root help and the installed skill point agents toward scoped discovery.
+
 ### Changed
 
+- Machine output uses compact JSON; pipe through `jq` for pretty printing.
 - Music compose, plan, detailed, and stream now use `music_v2_5` by default.
   Existing section-based plans retain `music_v1`; `--model` overrides the selection.
 - Music upload extraction sends a model ID instead of the deprecated boolean.
@@ -22,6 +30,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); version
 
 ### Fixed
 
+- Serialization and output-write failures return exit 1 instead of a success
+  envelope or a broken-pipe panic. Commands propagate output failures.
 - Voice design now uses `/v1/text-to-voice/design`, which supports model selection
   and streaming previews. Shared-voice pagination starts at page 0.
 - Composition-plan files accept the CLI success envelope as well as raw API JSON,

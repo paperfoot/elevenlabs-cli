@@ -335,7 +335,7 @@ elevenlabs history delete <id>
 elevenlabs config show | path | set <key> <value> | check | init --api-key sk_...
 elevenlabs skill install | status
 elevenlabs update [--check]
-elevenlabs agent-info          # JSON capability manifest (alias: info)
+elevenlabs agent-info [--command "music compose"] # JSON manifest (alias: info)
 ```
 
 </details>
@@ -346,8 +346,8 @@ elevenlabs agent-info          # JSON capability manifest (alias: info)
 
 This CLI is built to be called by autonomous agents. It follows the [Agent CLI Framework](https://github.com/paperfoot/agent-cli-framework) patterns:
 
-- **`agent-info`** returns a complete capability manifest as JSON — no MCP server required, no schema file to fetch.
-- **Dual output**: terminal users get colour + tables, piped/`--json` callers get a stable `{version, status, data|error}` envelope.
+- **Scoped discovery**: `agent-info --command tts` describes one command; `--command music` describes a group. Use canonical command names. The unfiltered manifest remains available, with its existing keys and metadata preserved.
+- **Compact output**: terminal users get colour + tables, piped/`--json` callers get one compact `{version, status, data|error}` envelope per line. `agent-info` is raw JSON. Use `jq` for indentation.
 - **Semantic exit codes**: `0=ok, 1=transient, 2=config/auth, 3=bad input, 4=rate limited`. Agents use these to pick retry, fix-and-retry, or escalate.
 - **Errors have suggestions**: every error envelope includes a `suggestion` field with a concrete next command, not vague advice.
 - **No interactive prompts** — every flag has an environment or config fallback. Scripts never hang.
@@ -356,8 +356,9 @@ This CLI is built to be called by autonomous agents. It follows the [Agent CLI F
 Example agent usage:
 
 ```bash
-# Bootstrap: what can this tool do?
-elevenlabs agent-info | jq '.commands | keys'
+# Find a command, then inspect only what the task needs.
+elevenlabs --help
+elevenlabs agent-info --command tts
 
 # Call it, parse structured output, preserve exit code
 if output=$(elevenlabs tts "status update" --json -o /tmp/out.mp3); then
@@ -383,7 +384,7 @@ The [official ElevenLabs MCP server](https://github.com/elevenlabs/elevenlabs-mc
 |------------------------------|----------------------|-------------------------------|
 | Install                      | Python, `uvx`, MCP client | Single ~5 MB static binary    |
 | Context cost per tool        | ~550-1400 tokens     | 0 (one shell exec)            |
-| Context cost to bootstrap    | ~55k tokens (typical)| One `agent-info` call         |
+| Context cost to bootstrap    | ~55k tokens (typical)| Scoped `agent-info --command` |
 | Scriptable                   | No                   | Yes (pipes, shell, make, CI)  |
 | Works without MCP host       | No                   | Yes                           |
 | Offline from first install   | No (needs runtime)   | Yes                           |

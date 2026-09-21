@@ -147,6 +147,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: LibraryArgs) -> Resu
             "\nAdd one to your library: {}",
             "elevenlabs voices add-shared <public_owner_id> <voice_id> --name <new_name>".bold()
         );
-    });
+    })?;
     Ok(())
 }

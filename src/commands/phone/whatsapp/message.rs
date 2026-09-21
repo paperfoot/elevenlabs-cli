@@ -89,7 +89,7 @@ pub async fn run(
             "+".green(),
             r["whatsapp_user_id"].as_str().unwrap_or("").bold()
         );
-    });
+    })?;
     Ok(())
 }
 

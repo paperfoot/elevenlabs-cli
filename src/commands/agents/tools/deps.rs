@@ -38,6 +38,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, tool_id: &str) -> Result<(
             ]);
         }
         println!("{t}");
-    });
+    })?;
     Ok(())
 }

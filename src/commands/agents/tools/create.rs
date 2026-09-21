@@ -44,6 +44,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, config: String) -> Result<
             name.bold(),
             id.dimmed()
         );
-    });
+    })?;
     Ok(())
 }

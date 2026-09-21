@@ -35,6 +35,6 @@ pub async fn run(
         .await?;
     output::print_success_or(ctx, &resp, |v| {
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
-    });
+    })?;
     Ok(())
 }
