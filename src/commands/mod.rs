@@ -61,3 +61,4 @@ pub fn mime_for_path(path: &Path) -> String {
         .unwrap_or("application/octet-stream")
         .to_string()
 }
+pub mod api;

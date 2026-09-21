@@ -1,0 +1,764 @@
+[
+  {
+    "method": "GET",
+    "path": "/v1/user",
+    "commands": [
+      "user info",
+      "doctor"
+    ],
+    "source": "src/commands/user.rs:19"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/user/subscription",
+    "commands": [
+      "user subscription"
+    ],
+    "source": "src/commands/user.rs:40"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/models",
+    "commands": [
+      "models list",
+      "doctor"
+    ],
+    "source": "src/commands/models.rs:40"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/voices",
+    "commands": [
+      "config check",
+      "doctor"
+    ],
+    "source": "src/commands/config.rs:183"
+  },
+  {
+    "method": "GET",
+    "path": "/v2/voices",
+    "commands": [
+      "voices list",
+      "voices search <query>",
+      "tts <text>",
+      "audio convert <file>"
+    ],
+    "source": "src/commands/voices/list.rs:74"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/voices/{voice_id}",
+    "commands": [
+      "voices show <voice_id>"
+    ],
+    "source": "src/commands/voices/show.rs:12"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/voices/{voice_id}",
+    "commands": [
+      "voices delete <voice_id> --yes"
+    ],
+    "source": "src/commands/voices/delete.rs:19"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/voices/{voice_id}/edit",
+    "commands": [
+      "voices edit <voice_id>"
+    ],
+    "source": "src/commands/voices/edit.rs:112"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/voices/{voice_id}/samples/{sample_id}",
+    "commands": [
+      "voices edit <voice_id>"
+    ],
+    "source": "src/commands/voices/edit.rs:57"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/voices/add",
+    "commands": [
+      "voices clone <name> <files...>"
+    ],
+    "source": "src/commands/voices/clone.rs:49"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/voices/add/{public_user_id}/{voice_id}",
+    "commands": [
+      "voices add-shared <public_user_id> <voice_id> --name <new_name>"
+    ],
+    "source": "src/commands/voices/add_shared.rs:48"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/shared-voices",
+    "commands": [
+      "voices library"
+    ],
+    "source": "src/commands/voices/library.rs:80"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/similar-voices",
+    "commands": [
+      "voices similar <audio_file>"
+    ],
+    "source": "src/commands/voices/similar.rs:49"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-voice/design",
+    "commands": [
+      "voices design <description>"
+    ],
+    "source": "src/commands/voices/design.rs:79"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-voice",
+    "commands": [
+      "voices save-preview <generated_voice_id> <name> <description>"
+    ],
+    "source": "src/commands/voices/save_preview.rs:23"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-speech/{voice_id}",
+    "commands": [
+      "tts <text>"
+    ],
+    "source": "src/commands/tts.rs:114"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-speech/{voice_id}/stream",
+    "commands": [
+      "tts <text>"
+    ],
+    "source": "src/commands/tts.rs:112"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-speech/{voice_id}/with-timestamps",
+    "commands": [
+      "tts <text>"
+    ],
+    "source": "src/commands/tts.rs:108"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-dialogue",
+    "commands": [
+      "dialogue [triples... | path.json | -]"
+    ],
+    "source": "src/commands/dialogue.rs:462"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-dialogue/stream",
+    "commands": [
+      "dialogue [triples... | path.json | -]"
+    ],
+    "source": "src/commands/dialogue.rs:460"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-dialogue/with-timestamps",
+    "commands": [
+      "dialogue [triples... | path.json | -]"
+    ],
+    "source": "src/commands/dialogue.rs:461"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/text-to-dialogue/stream/with-timestamps",
+    "commands": [
+      "dialogue [triples... | path.json | -]"
+    ],
+    "source": "src/commands/dialogue.rs:457"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/speech-to-text",
+    "commands": [
+      "stt [file]"
+    ],
+    "source": "src/commands/stt.rs:131"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/speech-to-speech/{voice_id}",
+    "commands": [
+      "audio convert <file>"
+    ],
+    "source": "src/commands/audio.rs:245"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/audio-isolation",
+    "commands": [
+      "audio isolate <file>"
+    ],
+    "source": "src/commands/audio.rs:112"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/forced-alignment",
+    "commands": [
+      "align <audio> <transcript|path>"
+    ],
+    "source": "src/commands/align.rs:92"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/sound-generation",
+    "commands": [
+      "sfx <text>"
+    ],
+    "source": "src/commands/sfx.rs:61"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/history",
+    "commands": [
+      "history list"
+    ],
+    "source": "src/commands/history.rs:83"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/history/{history_item_id}",
+    "commands": [
+      "history delete <id>"
+    ],
+    "source": "src/commands/history.rs:137"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/pronunciation-dictionaries/add-from-file",
+    "commands": [
+      "dict add-file <name> <file>"
+    ],
+    "source": "src/commands/dict/add_file.rs:50"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/pronunciation-dictionaries/add-from-rules",
+    "commands": [
+      "dict add-rules <name>"
+    ],
+    "source": "src/commands/dict/add_rules.rs:34"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/pronunciation-dictionaries",
+    "commands": [
+      "dict list"
+    ],
+    "source": "src/commands/dict/list.rs:29"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/pronunciation-dictionaries/{pronunciation_dictionary_id}",
+    "commands": [
+      "dict show <id>",
+      "dict download <id>"
+    ],
+    "source": "src/commands/dict/show.rs:10"
+  },
+  {
+    "method": "PATCH",
+    "path": "/v1/pronunciation-dictionaries/{pronunciation_dictionary_id}",
+    "commands": [
+      "dict update <id>"
+    ],
+    "source": "src/commands/dict/update.rs:40"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/pronunciation-dictionaries/{pronunciation_dictionary_id}/add-rules",
+    "commands": [
+      "dict add-rules-to <id>"
+    ],
+    "source": "src/commands/dict/add_rules_to.rs:22"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/pronunciation-dictionaries/{pronunciation_dictionary_id}/set-rules",
+    "commands": [
+      "dict set-rules <id>"
+    ],
+    "source": "src/commands/dict/set_rules.rs:31"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/pronunciation-dictionaries/{pronunciation_dictionary_id}/remove-rules",
+    "commands": [
+      "dict remove-rules <id>"
+    ],
+    "source": "src/commands/dict/remove_rules.rs:37"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/pronunciation-dictionaries/{dictionary_id}/{version_id}/download",
+    "commands": [
+      "dict download <id>"
+    ],
+    "source": "src/commands/dict/download.rs:29"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/music",
+    "commands": [
+      "music compose [prompt]"
+    ],
+    "source": "src/commands/music/compose.rs:37"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/music/stream",
+    "commands": [
+      "music stream [prompt]"
+    ],
+    "source": "src/commands/music/stream.rs:42"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/music/detailed",
+    "commands": [
+      "music detailed [prompt]"
+    ],
+    "source": "src/commands/music/detailed.rs:59"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/music/plan",
+    "commands": [
+      "music plan <prompt>"
+    ],
+    "source": "src/commands/music/plan.rs:34"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/music/upload",
+    "commands": [
+      "music upload <file>"
+    ],
+    "source": "src/commands/music/upload.rs:57"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/music/stem-separation",
+    "commands": [
+      "music stem-separation <song_id_or_file>"
+    ],
+    "source": "src/commands/music/stem.rs:77"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/music/video-to-music",
+    "commands": [
+      "music video-to-music <video_file>"
+    ],
+    "source": "src/commands/music/video.rs:72"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/dubbing",
+    "commands": [
+      "dubbing list"
+    ],
+    "source": "src/commands/dubbing/list.rs:27"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/dubbing",
+    "commands": [
+      "dubbing create"
+    ],
+    "source": "src/commands/dubbing/create.rs:109"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/dubbing/{dubbing_id}",
+    "commands": [
+      "dubbing show <dubbing_id>"
+    ],
+    "source": "src/commands/dubbing/show.rs:8"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/dubbing/{dubbing_id}",
+    "commands": [
+      "dubbing delete <dubbing_id> --yes"
+    ],
+    "source": "src/commands/dubbing/delete.rs:19"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/dubbing/{dubbing_id}/audio/{language_code}",
+    "commands": [
+      "dubbing get-audio <dubbing_id> <language_code>"
+    ],
+    "source": "src/commands/dubbing/audio.rs:21"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/dubbing/{dubbing_id}/transcripts/{language_code}/format/{format_type}",
+    "commands": [
+      "dubbing get-transcript <dubbing_id> <language_code> --format <srt|webvtt|json>"
+    ],
+    "source": "src/commands/dubbing/transcript.rs:41"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/dubbing/resource/{dubbing_id}/transcribe",
+    "commands": [
+      "dubbing resource transcribe <dubbing_id>"
+    ],
+    "source": "src/commands/dubbing/resource/transcribe.rs:14"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/dubbing/resource/{dubbing_id}/translate",
+    "commands": [
+      "dubbing resource translate <dubbing_id>"
+    ],
+    "source": "src/commands/dubbing/resource/translate.rs:14"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/dubbing/resource/{dubbing_id}/dub",
+    "commands": [
+      "dubbing resource dub <dubbing_id>"
+    ],
+    "source": "src/commands/dubbing/resource/dub.rs:14"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/dubbing/resource/{dubbing_id}/migrate-segments",
+    "commands": [
+      "dubbing resource migrate-segments <dubbing_id>"
+    ],
+    "source": "src/commands/dubbing/resource/migrate.rs:17"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/dubbing/resource/{dubbing_id}/render/{language}",
+    "commands": [
+      "dubbing resource render <dubbing_id> <language_code>"
+    ],
+    "source": "src/commands/dubbing/resource/render.rs:15"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/agents",
+    "commands": [
+      "agents list"
+    ],
+    "source": "src/commands/agents/list.rs:8"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/agents/create",
+    "commands": [
+      "agents create <name>"
+    ],
+    "source": "src/commands/agents/create.rs:156"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/agents/{agent_id}",
+    "commands": [
+      "agents show <agent_id>",
+      "agents add-knowledge <agent_id> <name>"
+    ],
+    "source": "src/commands/agents/show.rs:8"
+  },
+  {
+    "method": "PATCH",
+    "path": "/v1/convai/agents/{agent_id}",
+    "commands": [
+      "agents update <agent_id> --patch <json_file>",
+      "agents add-knowledge <agent_id> <name>"
+    ],
+    "source": "src/commands/agents/update.rs:42"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/convai/agents/{agent_id}",
+    "commands": [
+      "agents delete <agent_id>"
+    ],
+    "source": "src/commands/agents/delete.rs:26"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/agents/{agent_id}/duplicate",
+    "commands": [
+      "agents duplicate <agent_id>"
+    ],
+    "source": "src/commands/agents/duplicate.rs:13"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/llm/list",
+    "commands": [
+      "agents llms"
+    ],
+    "source": "src/commands/agents/llms.rs:31"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/conversation/get-signed-url",
+    "commands": [
+      "agents signed-url <agent_id>"
+    ],
+    "source": "src/commands/agents/signed_url.rs:14"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/conversations",
+    "commands": [
+      "conversations list"
+    ],
+    "source": "src/commands/conversations.rs:43"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/conversations/{conversation_id}",
+    "commands": [
+      "conversations show <conversation_id>"
+    ],
+    "source": "src/commands/conversations.rs:91"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/conversations/{conversation_id}/audio",
+    "commands": [
+      "conversations audio <conversation_id>"
+    ],
+    "source": "src/commands/conversations.rs:108"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/knowledge-base/url",
+    "commands": [
+      "agents add-knowledge <agent_id> <name>"
+    ],
+    "source": "src/commands/agents/knowledge.rs:63"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/knowledge-base/text",
+    "commands": [
+      "agents add-knowledge <agent_id> <name>"
+    ],
+    "source": "src/commands/agents/knowledge.rs:70"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/knowledge-base/file",
+    "commands": [
+      "agents add-knowledge <agent_id> <name>"
+    ],
+    "source": "src/commands/agents/knowledge.rs:96"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/knowledge-base",
+    "commands": [
+      "agents knowledge list"
+    ],
+    "source": "src/commands/agents/knowledge.rs:241"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/knowledge-base/search",
+    "commands": [
+      "agents knowledge search <query>"
+    ],
+    "source": "src/commands/agents/knowledge.rs:296"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/knowledge-base/{documentation_id}/refresh",
+    "commands": [
+      "agents knowledge refresh <document_id>"
+    ],
+    "source": "src/commands/agents/knowledge.rs:379"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/tools",
+    "commands": [
+      "agents tools list"
+    ],
+    "source": "src/commands/agents/tools/list.rs:8"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/tools",
+    "commands": [
+      "agents tools create --config <json_file>"
+    ],
+    "source": "src/commands/agents/tools/create.rs:27"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/tools/{tool_id}",
+    "commands": [
+      "agents tools show <tool_id>"
+    ],
+    "source": "src/commands/agents/tools/show.rs:8"
+  },
+  {
+    "method": "PATCH",
+    "path": "/v1/convai/tools/{tool_id}",
+    "commands": [
+      "agents tools update <tool_id> --patch <json_file>"
+    ],
+    "source": "src/commands/agents/tools/update.rs:32"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/convai/tools/{tool_id}",
+    "commands": [
+      "agents tools delete <tool_id> --yes"
+    ],
+    "source": "src/commands/agents/tools/delete.rs:22"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/tools/{tool_id}/dependent-agents",
+    "commands": [
+      "agents tools deps <tool_id>"
+    ],
+    "source": "src/commands/agents/tools/deps.rs:9"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/phone-numbers",
+    "commands": [
+      "phone list",
+      "phone call <agent_id>"
+    ],
+    "source": "src/commands/phone/list.rs:10"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/twilio/outbound-call",
+    "commands": [
+      "phone call <agent_id>"
+    ],
+    "source": "src/commands/phone/call.rs:46"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/sip-trunk/outbound-call",
+    "commands": [
+      "phone call <agent_id>"
+    ],
+    "source": "src/commands/phone/call.rs:47"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/batch-calling/workspace",
+    "commands": [
+      "phone batch list"
+    ],
+    "source": "src/commands/phone/batch/list.rs:40"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/batch-calling/submit",
+    "commands": [
+      "phone batch submit"
+    ],
+    "source": "src/commands/phone/batch/submit.rs:68"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/batch-calling/{batch_id}",
+    "commands": [
+      "phone batch show <batch_id>"
+    ],
+    "source": "src/commands/phone/batch/show.rs:10"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/convai/batch-calling/{batch_id}",
+    "commands": [
+      "phone batch delete <batch_id> --yes"
+    ],
+    "source": "src/commands/phone/batch/delete.rs:21"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/batch-calling/{batch_id}/cancel",
+    "commands": [
+      "phone batch cancel <batch_id>"
+    ],
+    "source": "src/commands/phone/batch/cancel.rs:11"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/batch-calling/{batch_id}/retry",
+    "commands": [
+      "phone batch retry <batch_id>"
+    ],
+    "source": "src/commands/phone/batch/retry.rs:8"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/whatsapp-accounts",
+    "commands": [
+      "phone whatsapp accounts list"
+    ],
+    "source": "src/commands/phone/whatsapp/accounts/list.rs:8"
+  },
+  {
+    "method": "GET",
+    "path": "/v1/convai/whatsapp-accounts/{phone_number_id}",
+    "commands": [
+      "phone whatsapp accounts show <id>"
+    ],
+    "source": "src/commands/phone/whatsapp/accounts/show.rs:8"
+  },
+  {
+    "method": "PATCH",
+    "path": "/v1/convai/whatsapp-accounts/{phone_number_id}",
+    "commands": [
+      "phone whatsapp accounts update <id> --patch <json_file>"
+    ],
+    "source": "src/commands/phone/whatsapp/accounts/update.rs:36"
+  },
+  {
+    "method": "DELETE",
+    "path": "/v1/convai/whatsapp-accounts/{phone_number_id}",
+    "commands": [
+      "phone whatsapp accounts delete <id> --yes"
+    ],
+    "source": "src/commands/phone/whatsapp/accounts/delete.rs:21"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/whatsapp/outbound-call",
+    "commands": [
+      "phone whatsapp call"
+    ],
+    "source": "src/commands/phone/whatsapp/call.rs:38"
+  },
+  {
+    "method": "POST",
+    "path": "/v1/convai/whatsapp/outbound-message",
+    "commands": [
+      "phone whatsapp message"
+    ],
+    "source": "src/commands/phone/whatsapp/message.rs:76"
+  }
+]

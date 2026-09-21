@@ -101,6 +101,25 @@ fn advertises_framework_commands() {
     assert!(commands.contains_key("update"));
 }
 
+#[test]
+fn advertises_schema_backed_api_commands() {
+    let info = agent_info();
+    let commands = command_map(&info);
+    assert!(commands.contains_key("api list"));
+    assert!(commands.contains_key("api schema <operation>"));
+    assert!(commands.contains_key("api call <operation>"));
+}
+
+#[test]
+fn scoped_api_discovery_returns_all_api_commands() {
+    let output = scoped_agent_info("api");
+    assert!(output.status.success());
+    let scoped: Value = serde_json::from_slice(&output.stdout).unwrap();
+    let commands = command_map(&scoped);
+    assert_eq!(commands.len(), 3);
+    assert!(commands.keys().all(|key| key.starts_with("api ")));
+}
+
 // ── Routability: every command listed must actually route ─────────────────
 
 #[test]

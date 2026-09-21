@@ -114,6 +114,7 @@ elevenlabs-cli/
 │   └── commands/
 │       ├── mod.rs            # shared helpers (resolve_output_path, read_file_bytes)
 │       ├── agent_info.rs     # the manifest — keep it in sync with cli.rs
+│       ├── api.rs api/       # schema-backed discovery, validation, and HTTP calls
 │       ├── skill.rs          # self-install to Claude/Codex/Gemini
 │       ├── config.rs         # config show/path/set/check/init
 │       ├── update.rs         # self-update via self_update crate
@@ -133,6 +134,7 @@ elevenlabs-cli/
 │   ├── output_contracts.rs       # JSON envelope shape + stdout/stderr split
 │   └── config_precedence.rs      # env > config precedence ladder
 └── .github/workflows/
+    ├── api-schema.yml        # vendored validation + scheduled upstream drift check
     ├── ci.yml                # fmt + clippy + test on linux/mac/windows
     └── release.yml           # build prebuilt binaries on tag push
 ```

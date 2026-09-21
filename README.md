@@ -19,7 +19,7 @@ TTS • STT • Sound Effects • Voice Cloning • Voice Design • Conversatio
 [![MSRV 1.85+](https://img.shields.io/badge/MSRV-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](#contributing)
 
-[Install](#install) • [Quick start](#quick-start) • [Recipes](#recipes) • [Commands](#commands) • [Comparison](#choosing-a-cli-or-mcp-connection) • [For agents](#for-ai-agents) • [Config](#configuration) • [**Contributing**](CONTRIBUTING.md) • [**AGENTS.md** (for LLM contributors)](AGENTS.md)
+[Install](#install) • [Quick start](#quick-start) • [Complete HTTP API](#complete-http-api-access) • [Recipes](#recipes) • [Commands](#commands) • [Comparison](#choosing-a-cli-or-mcp-connection) • [For agents](#for-ai-agents) • [Config](#configuration) • [**Contributing**](CONTRIBUTING.md) • [**AGENTS.md** (for LLM contributors)](AGENTS.md)
 
 </div>
 
@@ -43,9 +43,9 @@ elevenlabs agents create "triage-bot" --system-prompt "You are a friendly suppor
 elevenlabs phone call agent_xxx --from-id phnum_yyy --to +14155551234
 ```
 
-Commands auto-switch between **coloured human output** (terminal) and **JSON envelopes** (piped / `--json`). Discovery uses raw JSON; explicitly passing `--stdout` to TTS or dialogue writes audio bytes instead. Exit codes are semantic (`0=ok, 1=transient, 2=config, 3=bad input, 4=rate limited`). Errors carry a machine-readable `code` and a `suggestion` for recovery.
+Commands auto-switch between **coloured human output** (terminal) and **JSON envelopes** (piped / `--json`). `agent-info` uses raw JSON; `api` discovery follows the normal envelope contract. Explicitly passing `--stdout` to TTS or dialogue writes audio bytes instead. Exit codes are semantic (`0=ok, 1=transient, 2=config, 3=bad input, 4=rate limited`). Errors carry a machine-readable `code` and a `suggestion` for recovery.
 
-**Checked against a dated OpenAPI snapshot** — [`docs/reference/openapi.elevenlabs.json`](docs/reference/openapi.elevenlabs.json) is refreshable via [`./docs/reference/refresh.sh`](docs/reference/refresh.sh). The [compatibility audit](docs/reference/api-compatibility-2026-09-21.md) records verified changes and remaining scope. This CLI does not implement every API operation or validate every response against the schema.
+**Checked against a dated OpenAPI snapshot** — [`docs/reference/openapi.elevenlabs.json`](docs/reference/openapi.elevenlabs.json) is refreshable via [`./docs/reference/refresh.sh`](docs/reference/refresh.sh). The [compatibility audit](docs/reference/api-compatibility-2026-09-21.md) records verified changes and remaining scope. The curated commands use 94 HTTP operations; the schema-backed `api` command makes all 391 operations in the 2026-09-21 snapshot addressable. That is snapshot coverage, not a claim that every endpoint and parameter combination was tested against a live account.
 
 This is the **Paperfoot community CLI**. ElevenLabs also ships an [official CLI](https://github.com/elevenlabs/cli) with broad API coverage and agents-as-code workflows. Both use the executable name `elevenlabs`; use an explicit binary path when comparing them. See the [measured comparison](docs/reference/cli-comparison-2026-09-21.md).
 
@@ -99,7 +99,90 @@ elevenlabs skill install
 
 # 6. Bootstrap an agent with the full capability manifest
 elevenlabs agent-info | jq '.commands | keys'
+
+# 7. Discover API operations outside the curated command set
+elevenlabs api list --group workspace
+elevenlabs api schema history.list
+elevenlabs api call history.list --query page_size=2
 ```
+
+---
+
+## Complete HTTP API access
+
+The short commands remain the simplest interface for common audio and agent
+workflows. For everything else, v0.4.0 adds a schema-backed HTTP surface built
+from the bundled official OpenAPI snapshot:
+
+```bash
+# Compact group index, prefix-filtered group, text search, or all operations
+elevenlabs api list
+elevenlabs api list --group workspace
+elevenlabs api list --search "professional voice"
+elevenlabs api list --all
+
+# One operation's parameters, request bodies, responses, and referenced types
+elevenlabs api schema history.list
+
+# Dotted SDK aliases and OpenAPI operationId values are both accepted
+elevenlabs api call history.list --query page_size=2
+elevenlabs api call get_speech_history --query page_size=2
+```
+
+`--group workspace` includes nested groups such as `workspace.members`.
+`api schema` is scoped to one operation but includes the complete reference
+closure needed to interpret its request and response schemas.
+
+Inputs map directly to the operation schema:
+
+```bash
+elevenlabs api call voices.get --path voice_id=VOICE_ID
+elevenlabs api call conversational_ai.agents.summaries.get \
+  --query agent_ids=AGENT_A --query agent_ids=AGENT_B
+elevenlabs api call OPERATION --header safety-identifier=REQUEST_ID
+elevenlabs api call OPERATION --body '{"name":"Example"}'
+elevenlabs api call OPERATION --body @request.json
+elevenlabs api call OPERATION --field name=Example --field metadata='{"source":"cli"}'
+elevenlabs api call audio_isolation.convert --file audio=sample.wav --output isolated.mp3
+```
+
+Use `--path NAME=VALUE` for path parameters and repeat `--query` for array
+query values. `--field` accepts schema strings directly and JSON for objects,
+arrays, numbers, and booleans. Multipart file arrays use repeated
+`--file FIELD=PATH`. `--body` accepts inline JSON or `@file.json` and cannot be
+combined with `--field` or `--file`. Authentication always comes from the CLI
+configuration; `xi-api-key` cannot be supplied with `--header`.
+
+Binary audio, video, archive, and streaming responses require `--output PATH`.
+The destination must be a new file: existing files are never overwritten, the
+response is written incrementally, and an incomplete file is removed if the
+request or download fails. Multipart uploads also stream file contents instead
+of loading the full file into memory. Redirects are returned as
+`{http_status,location,redirect_followed:false}` and are never followed with
+credentials attached.
+
+Preview any request locally before sending it:
+
+```bash
+elevenlabs api call voices.get --path voice_id=VOICE_ID --dry-run
+elevenlabs api call history.delete --path history_item_id=ITEM_ID --dry-run
+elevenlabs api call history.delete --path history_item_id=ITEM_ID --confirm
+```
+
+Dry runs require no configuration or API key, make no network request, and
+redact credential-like fields. Live `DELETE` and explicit removal/bulk-deletion calls require `--confirm`; their
+dry runs do not. Local validation covers required inputs, types, enums, array
+and string lengths, and numeric bounds. ElevenLabs remains authoritative for
+formats, regex patterns, business rules, and cross-field constraints.
+
+The [2026-09-21 route inventory](docs/reference/curated-coverage-2026-09-21.json) found 94 HTTP operations behind the curated commands. The
+generic surface makes the remaining 297 operations in that 391-operation
+snapshot accessible without adding hundreds of command wrappers. It does not
+cover WebSocket APIs, automatically paginate, or automatically retry. Although
+the repository uses a Python standard-library script to refresh and validate
+the schema, the installed Rust binary has no Python runtime dependency. CI
+validates the snapshot on every change and checks the live schema for drift
+weekly.
 
 ---
 
@@ -349,6 +432,7 @@ elevenlabs agent-info [--command "music compose"] # JSON manifest (alias: info)
 This CLI is built to be called by autonomous agents. It follows the [Agent CLI Framework](https://github.com/paperfoot/agent-cli-framework) patterns:
 
 - **Scoped discovery**: `agent-info --command tts` describes one command; `--command music` describes a group. Use canonical command names. The unfiltered manifest remains available, with its existing keys and metadata preserved.
+- **Schema-backed discovery**: `api list` finds any bundled HTTP operation and `api schema OPERATION` returns its scoped request/response schema. Both work offline without credentials.
 - **Compact output**: terminal users get colour + tables, piped/`--json` callers get one compact `{version, status, data|error}` envelope per line. `agent-info` is raw JSON; TTS/dialogue `--stdout` deliberately emits audio bytes. Use `jq` for indentation.
 - **Semantic exit codes**: `0=ok, 1=transient, 2=config/auth, 3=bad input, 4=rate limited`. Agents use these to pick retry, fix-and-retry, or escalate.
 - **Errors have suggestions**: every error envelope includes a `suggestion` field. Input and setup errors commonly provide a next command; transient errors can provide retry guidance.
@@ -381,17 +465,18 @@ rm -f "$error_file"
 
 ## Choosing a CLI or MCP connection
 
-The [official CLI v1](https://elevenlabs.io/blog/elevenlabs-cli-v1), released August 24, 2026, also ships as a Rust binary. It includes generated API commands, typed `--schema` discovery, request previews with `--dry-run`, and agent push/pull workflows. A separate runtime and large up-front discovery cost are not inherent requirements of the official tools.
+The [official CLI v1](https://elevenlabs.io/blog/elevenlabs-cli-v1), released August 24, 2026, also ships as a Rust binary. It includes generated API commands, typed `--schema` discovery, request previews with `--dry-run`, and agent push/pull workflows. Paperfoot v0.4.0 now provides schema-backed HTTP discovery and dry runs while retaining its own output contract; agent push/pull remains an official-CLI workflow.
 
 | Need | Relevant option |
 |------|-----------------|
 | Short audio commands, compact envelopes, errors on stderr | This CLI |
-| Broad API coverage, typed request schemas, agents-as-code | [Official CLI](https://github.com/elevenlabs/cli) |
+| Bundled HTTP API coverage with compact envelopes and scoped schemas | This CLI |
+| Generated API commands, regional endpoints, auto-pagination, agents-as-code | [Official CLI](https://github.com/elevenlabs/cli) |
 | Connect an assistant through OAuth without local installation | [Hosted ElevenLabs MCP](https://elevenlabs.io/docs/eleven-agents/operate/hosted-mcp) |
 
 The old Python MCP server was [deprecated and archived in August 2026](https://elevenlabs.io/docs/changelog/2026/8/22). The current hosted service requires neither a local Python runtime nor an API key copied into the client. Its [product page](https://elevenlabs.io/mcp) describes agent management and creative generation, including images and video.
 
-Discovery and command results consume context with either CLI or MCP. Actual token use depends on the command, schema detail, client, and tokenizer. Our [reproducible comparison](docs/reference/cli-comparison-2026-09-21.md) measures binary size, local discovery time, output bytes, and pipeline behavior; it does not claim universal token savings or equivalent coverage.
+Discovery and command results consume context with either CLI or MCP. Actual token use depends on the command, schema detail, client, and tokenizer. Our [reproducible comparison](docs/reference/cli-comparison-2026-09-21.md) measures v0.3.3 binary size, local discovery time, output bytes, and pipeline behavior; it does not claim universal token savings. Its pre-v0.4.0 API gap count is historical because v0.4.0 adds the schema-backed 391-operation surface described above; the other measured results and comparison limits remain dated v0.3.3 evidence.
 
 ---
 
