@@ -90,7 +90,7 @@ elevenlabs stt interview.m4a --timestamps character --diarize --detect-speaker-r
 
 # 4. Browse voices — /v2/voices so search/sort actually works
 elevenlabs voices list
-elevenlabs voices library --gender female --accent british --page 1
+elevenlabs voices library --gender female --accent british --page 0
 
 # 5. Install the skill so Claude / Codex / Gemini discover the CLI automatically
 elevenlabs skill install
@@ -173,7 +173,7 @@ elevenlabs tts <text> [-o path] [--voice NAME | --voice-id ID] [--model ID]
 # Speech-to-text — default model scribe_v2; character-level timings for karaoke/lyric sync
 elevenlabs stt [FILE] [--from-url URL | --source-url URL]        # local | HTTPS | YouTube/TikTok
               [-o TEXT_PATH] [--save-raw JSON] [--save-words JSON]
-              [--model scribe_v2|scribe_v1] [--language ISO]
+              [--model scribe_v2|scribe_v2_medical] [--language ISO]
               [--timestamps none|word|character]                 # 'character' for lyric video sync
               [--diarize] [--num-speakers 1..32] [--diarization-threshold 0..1]
               [--detect-speaker-roles]                           # auto-label agent/customer
@@ -202,11 +202,11 @@ elevenlabs sfx <prompt> [-o path] [--duration 0.5..30] [--prompt-influence 0.3]
 
 ```bash
 elevenlabs voices list [--search TERM] [--sort name|created_at_unix] [--direction asc|desc]
-                      [--limit N] [--show-legacy]
+                      [--limit N]
 elevenlabs voices show <voice_id>
 elevenlabs voices search <query>
 
-# Public shared voice library — page is 1-indexed
+# Public shared voice library — page is 0-indexed
 elevenlabs voices library [--search TERM] [--page 1] [--page-size 20]
                          [--category professional|high_quality|famous]
                          [--gender female] [--age young|middle_aged|old] [--accent british]
@@ -255,11 +255,18 @@ elevenlabs audio convert <file> [--voice NAME | --voice-id ID] [--model ID] [-o 
 # length_ms: 3000-600000 per the official API
 elevenlabs music compose [prompt] [--length-ms 3000..600000] [-o path] [--format FMT]
                         [--composition-plan FILE]          # mutually exclusive with prompt
-                        [--model music_v1] [--seed N] [--force-instrumental]
+                        [--model music_v2_5|music_v2|music_v1] [--seed N] [--force-instrumental]
                         [--respect-sections-durations] [--store-for-inpainting] [--sign-with-c2pa]
 
-elevenlabs music plan <prompt> [--length-ms 3000..600000] [--model music_v1]
+elevenlabs music plan <prompt> [--length-ms 3000..600000] [--model music_v2_5|music_v2|music_v1]
+elevenlabs music upload <file> [--extract-composition-plan] [--model music_v2_5|music_v2|music_v1]
 ```
+
+Music defaults to `music_v2_5`. Existing section-based composition plans automatically
+use `music_v1`; chunk-based plans use the current model. `--model` overrides the
+selection. Plan files accept raw API JSON or the envelope from `music plan > plan.json`.
+Upload extraction returns the current model’s plan format; use `--model music_v1`
+with `--extract-composition-plan` for the legacy format.
 
 </details>
 
@@ -272,7 +279,7 @@ elevenlabs agents show <agent_id>        # alias: get
 elevenlabs agents create <name>
     --system-prompt "..."
     [--first-message "Hi, how can I help?"]
-    [--voice-id ID] [--language en] [--llm gemini-3.1-flash-lite-preview]
+    [--voice-id ID] [--language en] [--llm gemini-3.1-flash-lite]
     [--temperature 0.5] [--model-id eleven_flash_v2_5]
     [--expressive-mode] [--max-duration-seconds 600]
     [--voicemail-detection] [--voicemail-message "..."]

@@ -40,7 +40,6 @@ pub async fn dispatch(ctx: Ctx, action: VoicesAction) -> Result<(), AppError> {
             sort,
             direction,
             limit,
-            show_legacy,
             next_page_token,
             voice_type,
             category,
@@ -57,7 +56,6 @@ pub async fn dispatch(ctx: Ctx, action: VoicesAction) -> Result<(), AppError> {
                     sort,
                     direction,
                     limit,
-                    show_legacy,
                     next_page_token,
                     voice_type,
                     category,
@@ -166,11 +164,6 @@ pub async fn dispatch(ctx: Ctx, action: VoicesAction) -> Result<(), AppError> {
             audio_file,
             similarity_threshold,
             top_k,
-            gender,
-            age,
-            accent,
-            language,
-            use_case,
         } => {
             similar::run(
                 ctx,
@@ -179,11 +172,6 @@ pub async fn dispatch(ctx: Ctx, action: VoicesAction) -> Result<(), AppError> {
                     audio_file,
                     similarity_threshold,
                     top_k,
-                    gender,
-                    age,
-                    accent,
-                    language,
-                    use_case,
                 },
             )
             .await

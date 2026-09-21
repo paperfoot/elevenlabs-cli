@@ -14,7 +14,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, query: String) -> Result<(
             sort: "name".into(),
             direction: "asc".into(),
             limit: 50,
-            show_legacy: false,
             next_page_token: None,
             voice_type: None,
             category: None,

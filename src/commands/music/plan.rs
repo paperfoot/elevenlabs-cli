@@ -1,6 +1,6 @@
 //! music plan — POST /v1/music/plan
 //!
-//! Returns a JSON composition plan (sections + metadata). Free endpoint,
+//! Returns a JSON composition plan (chunks for v2/v2.5, sections for v1). Free endpoint,
 //! subject to rate limits. The plan can be piped back into `music compose
 //! --composition-plan <file>`.
 
@@ -26,9 +26,10 @@ pub async fn run(
     if let Some(ms) = length_ms {
         body.insert("music_length_ms".into(), serde_json::json!(ms));
     }
-    if let Some(m) = model {
-        body.insert("model_id".into(), serde_json::Value::String(m));
-    }
+    body.insert(
+        "model_id".into(),
+        serde_json::json!(model.as_deref().unwrap_or(super::DEFAULT_MODEL)),
+    );
     let resp: serde_json::Value = client
         .post_json("/v1/music/plan", &serde_json::Value::Object(body))
         .await?;

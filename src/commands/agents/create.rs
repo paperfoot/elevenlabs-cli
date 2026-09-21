@@ -95,7 +95,7 @@ pub async fn run(
         },
         "asr": {
             "quality": "high",
-            "provider": "elevenlabs",
+            "provider": "scribe_realtime",
             "user_input_audio_format": "pcm_16000",
             "keywords": []
         },
@@ -104,16 +104,13 @@ pub async fn run(
             "model_id": effective_model_id,
             "expressive_mode": expressive_mode,
             "agent_output_audio_format": "pcm_16000",
-            "optimize_streaming_latency": 3,
             "stability": 0.5,
             "similarity_boost": 0.8
         },
         "turn": {
-            // turn_model is not in the checked-in OpenAPI spec, but the live
-            // API enforces the enum {turn_v2, turn_v3} (verified via probe,
-            // 2026-04-21). turn_v2 is the proven-working detector; turn_v3
-            // was observed swallowing short turn-ends on some LLM configs.
-            // Treat this as an empirical knob, not a spec-backed one.
+            // Both versions are documented in the current schema. Retain the
+            // detector verified by the maintainer in April: turn_v3 was
+            // observed swallowing short turn-ends on some LLM configs.
             "turn_model": "turn_v2",
             "turn_timeout": 7,
             "turn_eagerness": "normal"

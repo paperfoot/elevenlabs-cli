@@ -1,4 +1,4 @@
-//! voices library — `/v1/shared-voices` (1-indexed pagination).
+//! voices library — `/v1/shared-voices` (0-indexed pagination).
 
 use crate::client::ElevenLabsClient;
 use crate::error::AppError;
@@ -25,8 +25,7 @@ pub struct LibraryArgs {
 }
 
 pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: LibraryArgs) -> Result<(), AppError> {
-    // The API is 1-indexed on page. v0.1.3 and earlier sent 0-indexed which
-    // caused a silent off-by-one on this endpoint.
+    // The API uses zero-based pages; page 0 contains the first results.
     let mut params: Vec<(&str, String)> = vec![
         ("page", args.page.to_string()),
         ("page_size", args.page_size.to_string()),

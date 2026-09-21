@@ -3,6 +3,32 @@
 All notable changes to `elevenlabs-cli` are listed here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org).
 
+## [0.3.3] — 2026-09-21
+
+### Changed
+
+- Music compose, plan, detailed, and stream now use `music_v2_5` by default.
+  Existing section-based plans retain `music_v1`; `--model` overrides the selection.
+- Music upload extraction sends a model ID instead of the deprecated boolean.
+  Use `--extract-composition-plan --model music_v1` to request the legacy format.
+- STT accepts current and future batch model IDs, including `scribe_v2_medical`
+  with `--no-verbatim`. Retired `scribe_v1` produces a migration suggestion.
+- Agent creation defaults to `gemini-3.1-flash-lite`, the replacement reported
+  by the live LLM catalog for the deprecated preview.
+- Agent creation uses the current `scribe_realtime` ASR provider and omits the
+  deprecated latency setting. The empirically verified turn detector is retained.
+- Removed unsupported `voices list --show-legacy` and `voices similar` demographic
+  flags that the server silently ignored. Use `voices library` for demographic filters.
+
+### Fixed
+
+- Voice design now uses `/v1/text-to-voice/design`, which supports model selection
+  and streaming previews. Shared-voice pagination starts at page 0.
+- Composition-plan files accept the CLI success envelope as well as raw API JSON,
+  making `music plan > plan.json` usable directly. Incompatible model/plan pairs
+  fail locally with an actionable suggestion.
+- Refreshed the vendored API reference against the live schema on 2026-09-21.
+
 ## [0.3.2] — 2026-04-21
 
 ### Changed — `--llm` default reverted to the newest preview

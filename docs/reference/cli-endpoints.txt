@@ -84,7 +84,7 @@
 /v1/text-to-speech/{X}/stream                                                     -- src/commands/tts.rs
 /v1/text-to-speech/{X}/with-timestamps                                            -- src/commands/tts.rs
 /v1/text-to-voice                                                                 -- src/commands/voices/save_preview.rs
-/v1/text-to-voice/create-previews                                                 -- src/commands/voices/design.rs
+/v1/text-to-voice/design                                                          -- src/commands/voices/design.rs
 /v1/user                                                                          -- src/commands/doctor.rs
 /v1/user                                                                          -- src/commands/user.rs
 /v1/user/subscription                                                             -- src/commands/user.rs

@@ -1,10 +1,10 @@
 //! music upload — POST /v1/music/upload
 //!
 //! Contract (verified against elevenlabs-python/src/elevenlabs/music/
-//! raw_client.py `upload`, April 2026):
+//! raw_client.py `upload`, September 2026):
 //!
 //!   - multipart body, required field `file`
-//!   - optional form field `extract_composition_plan` (bool)
+//!   - optional form field `extract_composition_plan` (model ID; booleans deprecated)
 //!   - response: JSON `{ song_id, composition_plan?, ... }`
 //!
 //! Historical note: pre-v0.2 this CLI also sent `name` and
@@ -45,7 +45,13 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: UploadArgs) -> Resul
 
     let mut form = reqwest::multipart::Form::new().part("file", file_part);
     if args.extract_composition_plan {
-        form = form.text("extract_composition_plan", "true".to_string());
+        form = form.text(
+            "extract_composition_plan",
+            args.model
+                .as_deref()
+                .unwrap_or(super::DEFAULT_MODEL)
+                .to_string(),
+        );
     }
 
     let resp: serde_json::Value = client.post_multipart_json("/v1/music/upload", form).await?;
