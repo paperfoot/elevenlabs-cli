@@ -4,7 +4,7 @@
 
 # `elevenlabs-cli`
 
-**One Rust binary. Every [ElevenLabs](https://elevenlabs.io) endpoint. No MCP server, no Python runtime, no drift.**
+**One Rust binary for [ElevenLabs](https://elevenlabs.io) audio and agent workflows. Compact JSON, scoped discovery, and shell-friendly errors.**
 
 TTS • STT • Sound Effects • Voice Cloning • Voice Design • Conversational Agents • Music Generation • Phone Calls — all from your terminal, all machine-readable.
 
@@ -19,7 +19,7 @@ TTS • STT • Sound Effects • Voice Cloning • Voice Design • Conversatio
 [![MSRV 1.85+](https://img.shields.io/badge/MSRV-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=for-the-badge)](#contributing)
 
-[Install](#install) • [Quick start](#quick-start) • [Recipes](#recipes) • [Commands](#commands) • [Why](#why-a-cli-instead-of-an-mcp-server) • [For agents](#for-ai-agents) • [Config](#configuration) • [**Contributing**](CONTRIBUTING.md) • [**AGENTS.md** (for LLM contributors)](AGENTS.md)
+[Install](#install) • [Quick start](#quick-start) • [Recipes](#recipes) • [Commands](#commands) • [Comparison](#choosing-a-cli-or-mcp-connection) • [For agents](#for-ai-agents) • [Config](#configuration) • [**Contributing**](CONTRIBUTING.md) • [**AGENTS.md** (for LLM contributors)](AGENTS.md)
 
 </div>
 
@@ -27,7 +27,7 @@ TTS • STT • Sound Effects • Voice Cloning • Voice Design • Conversatio
 
 ## What it does
 
-A single ~5 MB Rust binary that exposes the entire ElevenLabs platform on the command line:
+A standalone Rust binary with focused commands for speech, music, voices, dubbing, and agent management:
 
 ```bash
 elevenlabs tts "Hello, world"                                        # Text → speech
@@ -43,9 +43,11 @@ elevenlabs agents create "triage-bot" --system-prompt "You are a friendly suppor
 elevenlabs phone call agent_xxx --from-id phnum_yyy --to +14155551234
 ```
 
-Every command auto-switches between **coloured human output** (terminal) and **JSON envelopes** (piped / `--json`). Exit codes are semantic (`0=ok, 1=transient, 2=config, 3=bad input, 4=rate limited`). Errors carry a machine-readable `code` and an actionable `suggestion` an AI agent can follow literally.
+Commands auto-switch between **coloured human output** (terminal) and **JSON envelopes** (piped / `--json`). Discovery uses raw JSON; explicitly passing `--stdout` to TTS or dialogue writes audio bytes instead. Exit codes are semantic (`0=ok, 1=transient, 2=config, 3=bad input, 4=rate limited`). Errors carry a machine-readable `code` and a `suggestion` for recovery.
 
-**Grounded against the live OpenAPI spec** — every request/response type is verified against the vendored snapshot at [`docs/reference/openapi.elevenlabs.json`](docs/reference/openapi.elevenlabs.json), refreshable in one command via [`./docs/reference/refresh.sh`](docs/reference/refresh.sh).
+**Checked against a dated OpenAPI snapshot** — [`docs/reference/openapi.elevenlabs.json`](docs/reference/openapi.elevenlabs.json) is refreshable via [`./docs/reference/refresh.sh`](docs/reference/refresh.sh). The [compatibility audit](docs/reference/api-compatibility-2026-09-21.md) records verified changes and remaining scope. This CLI does not implement every API operation or validate every response against the schema.
+
+This is the **Paperfoot community CLI**. ElevenLabs also ships an [official CLI](https://github.com/elevenlabs/cli) with broad API coverage and agents-as-code workflows. Both use the executable name `elevenlabs`; use an explicit binary path when comparing them. See the [measured comparison](docs/reference/cli-comparison-2026-09-21.md).
 
 ---
 
@@ -347,10 +349,10 @@ elevenlabs agent-info [--command "music compose"] # JSON manifest (alias: info)
 This CLI is built to be called by autonomous agents. It follows the [Agent CLI Framework](https://github.com/paperfoot/agent-cli-framework) patterns:
 
 - **Scoped discovery**: `agent-info --command tts` describes one command; `--command music` describes a group. Use canonical command names. The unfiltered manifest remains available, with its existing keys and metadata preserved.
-- **Compact output**: terminal users get colour + tables, piped/`--json` callers get one compact `{version, status, data|error}` envelope per line. `agent-info` is raw JSON. Use `jq` for indentation.
+- **Compact output**: terminal users get colour + tables, piped/`--json` callers get one compact `{version, status, data|error}` envelope per line. `agent-info` is raw JSON; TTS/dialogue `--stdout` deliberately emits audio bytes. Use `jq` for indentation.
 - **Semantic exit codes**: `0=ok, 1=transient, 2=config/auth, 3=bad input, 4=rate limited`. Agents use these to pick retry, fix-and-retry, or escalate.
-- **Errors have suggestions**: every error envelope includes a `suggestion` field with a concrete next command, not vague advice.
-- **No interactive prompts** — every flag has an environment or config fallback. Scripts never hang.
+- **Errors have suggestions**: every error envelope includes a `suggestion` field. Input and setup errors commonly provide a next command; transient errors can provide retry guidance.
+- **No interactive prompts**: pass arguments explicitly; commands that support stdin require `-`.
 - **Installable skill**: `elevenlabs skill install` drops `SKILL.md` into `~/.claude/skills/`, `~/.codex/skills/`, and `~/.gemini/skills/` so agents discover the tool automatically.
 
 Example agent usage:
@@ -360,40 +362,36 @@ Example agent usage:
 elevenlabs --help
 elevenlabs agent-info --command tts
 
-# Call it, parse structured output, preserve exit code
-if output=$(elevenlabs tts "status update" --json -o /tmp/out.mp3); then
+# Call it, capture errors from stderr, and preserve the exit code
+error_file=$(mktemp)
+if output=$(elevenlabs tts "status update" --json -o /tmp/out.mp3 2>"$error_file"); then
   path=$(echo "$output" | jq -r '.data.output_path')
 else
   rc=$?
-  code=$(echo "$output" | jq -r '.error.code')         # e.g. auth_failed, rate_limited
-  suggestion=$(echo "$output" | jq -r '.error.suggestion')
-  # 1=transient retry, 2=fix config, 3=fix args, 4=wait then retry
-  [ "$rc" -eq 4 ] && sleep 30 && continue
+  code=$(jq -r '.error.code' "$error_file")         # e.g. auth_failed, rate_limited
+  suggestion=$(jq -r '.error.suggestion' "$error_file")
+  printf '%s: %s (exit %s)\n' "$code" "$suggestion" "$rc" >&2
 fi
+rm -f "$error_file"
 ```
 
 **Auth model for agents (v0.1.6+)**: run `elevenlabs config init --api-key sk_...` once per machine. The saved key wins over `ELEVENLABS_API_KEY` so a stale env var in some other tool's `.env` never silently breaks your CLI calls. `elevenlabs config show --json` reports which source is in use and whether an env var is set-but-ignored.
 
 ---
 
-## Why a CLI instead of an MCP server?
+## Choosing a CLI or MCP connection
 
-The [official ElevenLabs MCP server](https://github.com/elevenlabs/elevenlabs-mcp) runs as a stdio subprocess per session, burns context on tool definitions, requires a Python runtime, and drifts from the API. This CLI does the opposite:
+The [official CLI v1](https://elevenlabs.io/blog/elevenlabs-cli-v1), released August 24, 2026, also ships as a Rust binary. It includes generated API commands, typed `--schema` discovery, request previews with `--dry-run`, and agent push/pull workflows. A separate runtime and large up-front discovery cost are not inherent requirements of the official tools.
 
-|                              | MCP server           | `elevenlabs-cli`              |
-|------------------------------|----------------------|-------------------------------|
-| Install                      | Python, `uvx`, MCP client | Single ~5 MB static binary    |
-| Context cost per tool        | ~550-1400 tokens     | 0 (one shell exec)            |
-| Context cost to bootstrap    | ~55k tokens (typical)| Scoped `agent-info --command` |
-| Scriptable                   | No                   | Yes (pipes, shell, make, CI)  |
-| Works without MCP host       | No                   | Yes                           |
-| Offline from first install   | No (needs runtime)   | Yes                           |
-| Cold start                   | ~200 ms+             | **<10 ms**                    |
-| Memory                       | ~50-80 MB            | **~7 MB**                     |
+| Need | Relevant option |
+|------|-----------------|
+| Short audio commands, compact envelopes, errors on stderr | This CLI |
+| Broad API coverage, typed request schemas, agents-as-code | [Official CLI](https://github.com/elevenlabs/cli) |
+| Connect an assistant through OAuth without local installation | [Hosted ElevenLabs MCP](https://elevenlabs.io/docs/eleven-agents/operate/hosted-mcp) |
 
-Benchmarks in the wild: [MCP vs CLI (Scalekit)](https://www.scalekit.com/blog/mcp-vs-cli-use) measured a 32× token overhead for MCP on 75 real tasks. [Speakeasy](https://www.speakeasy.com/blog/how-we-reduced-token-usage-by-100x-dynamic-toolsets-v2) reduced token usage by ~100× by moving agents off MCP onto CLIs. GitHub Copilot [dropped from 40 tools to 13](https://github.blog/ai-and-ml/github-copilot/how-were-making-github-copilot-smarter-with-fewer-tools/) and got better results.
+The old Python MCP server was [deprecated and archived in August 2026](https://elevenlabs.io/docs/changelog/2026/8/22). The current hosted service requires neither a local Python runtime nor an API key copied into the client. Its [product page](https://elevenlabs.io/mcp) describes agent management and creative generation, including images and video.
 
-LLMs already know how to drive CLIs — the grammar of `tool subcommand --flag value` is baked into their weights. Give them a tool, not a pamphlet about tools.
+Discovery and command results consume context with either CLI or MCP. Actual token use depends on the command, schema detail, client, and tokenizer. Our [reproducible comparison](docs/reference/cli-comparison-2026-09-21.md) measures binary size, local discovery time, output bytes, and pipeline behavior; it does not claim universal token savings or equivalent coverage.
 
 ---
 
@@ -432,7 +430,7 @@ repo = "elevenlabs-cli"
 
 Why file wins over env: a stale `ELEVENLABS_API_KEY` left exported in `~/.zshrc`, a project `.env` file, or a shell session previously used to be silently "promoted" over a freshly-saved CLI key and produced confusing `Invalid API key` errors. Now the explicit, scope-specific key you saved via `elevenlabs config init` is always what ships on the wire. CI and container setups are unaffected — they don't ship a `config.toml`, so the env var is still picked up as the only source.
 
-Other flags / env vars still apply in the usual order: explicit command-line flags → config → env → defaults.
+Other settings apply in this order: explicit command-line flags → environment → config → defaults. The API key is the file-first exception described above.
 
 > **Upgrading from ≤0.1.5**: if you relied on `ELEVENLABS_API_KEY` in your shell overriding a saved config, either delete the `api_key` line from `config.toml`, or overwrite it with `elevenlabs config set api_key <value>`. `elevenlabs config show` now reports which source is being used and calls out the env-var-is-set-but-ignored case.
 

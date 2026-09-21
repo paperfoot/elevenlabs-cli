@@ -1,0 +1,208 @@
+{
+  "measured_at_utc": "2026-09-21T13:14:58.417124+00:00",
+  "platform": "Darwin",
+  "platform_release": "27.0.0",
+  "architecture": "arm64",
+  "timing": "Warm local subprocess wall time; includes startup and discovery, excludes API work.",
+  "samples": 25,
+  "binaries": {
+    "paperfoot": {
+      "bytes": 5739312,
+      "sha256": "c2924e1cc79f997a8a6e3a39a1c05e3eca4654e3435e27f00cd3cca63e51ee07",
+      "checks": {
+        "version": {
+          "args": [
+            "--version"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 71,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 71,
+          "stderr_json": false
+        },
+        "help": {
+          "args": [
+            "--help"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 2193,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 2193,
+          "stderr_json": false
+        },
+        "index": {
+          "args": [
+            "agent-info"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 23402,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 23402,
+          "stderr_json": false
+        },
+        "tts": {
+          "args": [
+            "agent-info",
+            "--command",
+            "tts"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 6040,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 6040,
+          "stderr_json": false
+        },
+        "music": {
+          "args": [
+            "agent-info",
+            "--command",
+            "music compose"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 5488,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 5488,
+          "stderr_json": false
+        },
+        "invalid": {
+          "args": [
+            "unknown-command"
+          ],
+          "exit_code": 3,
+          "stdout_bytes": 0,
+          "stderr_bytes": 264,
+          "stdout_json": false,
+          "stderr_json": true,
+          "stderr_compact_json_bytes": 264
+        },
+        "missing_argument": {
+          "args": [
+            "tts"
+          ],
+          "exit_code": 3,
+          "stdout_bytes": 0,
+          "stderr_bytes": 275,
+          "stdout_json": false,
+          "stderr_json": true,
+          "stderr_compact_json_bytes": 275
+        }
+      },
+      "version": "elevenlabs 0.3.3",
+      "discovery_entries": 96,
+      "tts_discovery_median_ms": 12.174
+    },
+    "official": {
+      "bytes": 16436864,
+      "sha256": "4ab3066ade5370cb037f26ee2f8605c75cf1c6e7491bf5fd3413c1cf7ebf51ac",
+      "checks": {
+        "version": {
+          "args": [
+            "--version"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 17,
+          "stderr_bytes": 0,
+          "stdout_json": false,
+          "stderr_json": false
+        },
+        "help": {
+          "args": [
+            "--help"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 6291,
+          "stderr_bytes": 0,
+          "stdout_json": false,
+          "stderr_json": false
+        },
+        "index": {
+          "args": [
+            "--schema"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 45238,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 34701,
+          "stderr_json": false
+        },
+        "tts": {
+          "args": [
+            "text-to-speech",
+            "convert",
+            "--schema"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 9944,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 8205,
+          "stderr_json": false
+        },
+        "music": {
+          "args": [
+            "music",
+            "compose",
+            "--schema"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 6538,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 5039,
+          "stderr_json": false
+        },
+        "invalid": {
+          "args": [
+            "unknown-command"
+          ],
+          "exit_code": 3,
+          "stdout_bytes": 177,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 145,
+          "stderr_json": false
+        },
+        "missing_argument": {
+          "args": [
+            "text-to-speech",
+            "convert",
+            "--text",
+            "hello"
+          ],
+          "exit_code": 3,
+          "stdout_bytes": 168,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 142,
+          "stderr_json": false
+        },
+        "dry_run": {
+          "args": [
+            "text-to-speech",
+            "convert",
+            "--voice-id",
+            "audit-placeholder",
+            "--text",
+            "hello",
+            "--dry-run"
+          ],
+          "exit_code": 0,
+          "stdout_bytes": 262,
+          "stderr_bytes": 0,
+          "stdout_json": true,
+          "stdout_compact_json_bytes": 220,
+          "stderr_json": false
+        }
+      },
+      "version": "elevenlabs 1.3.2",
+      "discovery_entries": 387,
+      "tts_discovery_median_ms": 100.442
+    }
+  }
+}
