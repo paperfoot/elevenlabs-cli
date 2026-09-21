@@ -237,9 +237,11 @@ These are real bugs found during v0.1.0 verification. Don't recreate them:
 This CLI covers the ElevenLabs HTTP API. It does **not**:
 
 - Run a long-lived daemon, server, or MCP process.
-- Replace the official [`@elevenlabs/cli`](https://github.com/elevenlabs/cli)
-  which does config-as-code GitOps for agents (push/pull local files).
-  The two are complementary.
+- Replace the official [`@elevenlabs/cli`](https://github.com/elevenlabs/cli).
+  Since v1 (August 2026), it includes generated API commands, typed schemas,
+  dry-run previews, and config-as-code workflows. This project provides
+  focused audio/agent commands and its own output contract; see the
+  [dated comparison](docs/reference/cli-comparison-2026-09-21.md).
 - Ship a GUI, TUI, or REPL mode.
 - Depend on Python, Node, or any non-Rust runtime.
 
