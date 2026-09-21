@@ -30,6 +30,19 @@ impl ElevenLabsClient {
     /// Build a client from loaded config. Errors with `AuthMissing` if no
     /// API key is configured anywhere.
     pub fn from_config(cfg: &AppConfig) -> Result<Self, AppError> {
+        Self::with_redirect_policy(cfg, reqwest::redirect::Policy::limited(10))
+    }
+
+    pub fn for_api(cfg: &AppConfig) -> Result<Self, AppError> {
+        // Generic operations can include redirect endpoints (e.g. /docs).
+        // Surface their location without forwarding xi-api-key to another host.
+        Self::with_redirect_policy(cfg, reqwest::redirect::Policy::none())
+    }
+
+    fn with_redirect_policy(
+        cfg: &AppConfig,
+        policy: reqwest::redirect::Policy,
+    ) -> Result<Self, AppError> {
         let api_key = cfg.resolve_api_key().ok_or(AppError::AuthMissing)?;
 
         let mut headers = HeaderMap::new();
@@ -44,6 +57,7 @@ impl ElevenLabsClient {
         );
 
         let http = reqwest::Client::builder()
+            .redirect(policy)
             .default_headers(headers)
             .timeout(Duration::from_secs(300))
             .connect_timeout(Duration::from_secs(15))
@@ -65,6 +79,56 @@ impl ElevenLabsClient {
     /// Build an absolute URL for the given path. Path should start with `/`.
     pub fn url(&self, path: &str) -> String {
         format!("{}{}", self.base_url.trim_end_matches('/'), path)
+    }
+
+    /// Schema-selected operation, sharing authentication and status handling.
+    pub async fn send_api(
+        &self,
+        method: &str,
+        path: &str,
+        query: &[(String, String)],
+        headers: &[(String, String)],
+        body: Option<&serde_json::Value>,
+        form: Option<reqwest::multipart::Form>,
+    ) -> Result<reqwest::Response, AppError> {
+        let method = reqwest::Method::from_bytes(method.to_uppercase().as_bytes())
+            .map_err(|_| AppError::bad_input("Unsupported HTTP method"))?;
+        let mut request = self.http.request(method, self.url(path)).query(query);
+        for (name, value) in headers {
+            request = request.header(name, value);
+        }
+        if let Some(form) = form {
+            request = request.multipart(form);
+        } else if let Some(body) = body {
+            request = request.json(body);
+        }
+        let response = request
+            .send()
+            .await
+            .map_err(|e| AppError::Http(e.without_url().to_string()))?;
+        if response.status().is_redirection() {
+            return Ok(response);
+        }
+        check_status(response).await.map_err(|error| match error {
+            AppError::Api { status, message } => {
+                let message = redact_api_error(&message, &self.api_key, body);
+                if (400..500).contains(&status) {
+                    AppError::bad_input_with(
+                        message,
+                        "Inspect the request inputs: elevenlabs api call --help",
+                    )
+                } else {
+                    AppError::Api { status, message }
+                }
+            }
+            AppError::AuthFailed(message) => {
+                AppError::AuthFailed(redact_api_error(&message, &self.api_key, body))
+            }
+            AppError::RateLimited(message) => {
+                AppError::RateLimited(redact_api_error(&message, &self.api_key, body))
+            }
+            error => error,
+        })
     }
 
     // ── GET → JSON ─────────────────────────────────────────────────────────
@@ -373,4 +437,49 @@ fn extract_api_message(body: &str) -> Option<String> {
     v.get("message")
         .and_then(|m| m.as_str())
         .map(|s| s.to_string())
+}
+
+pub(crate) fn credential_field(key: &str) -> bool {
+    let key = key.to_ascii_lowercase().replace('-', "_");
+    matches!(
+        key.as_str(),
+        "authorization"
+            | "password"
+            | "secret"
+            | "secret_value"
+            | "token"
+            | "access_token"
+            | "refresh_token"
+            | "api_key"
+            | "xi_api_key"
+    ) || key.ends_with("_secret")
+        || key.ends_with("_api_key")
+        || matches!(key.as_str(), "secret_key" | "secrets" | "private_key")
+        || (key.ends_with("_token") && !matches!(key.as_str(), "next_page_token" | "page_token"))
+}
+
+fn redact_api_error(message: &str, api_key: &str, body: Option<&serde_json::Value>) -> String {
+    fn scrub(message: &mut String, value: &serde_json::Value, secret: bool) {
+        match value {
+            serde_json::Value::Object(map) => {
+                for (key, value) in map {
+                    scrub(message, value, secret || credential_field(key));
+                }
+            }
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    scrub(message, value, secret);
+                }
+            }
+            serde_json::Value::String(value) if secret && !value.is_empty() => {
+                *message = message.replace(value, "[REDACTED]");
+            }
+            _ => {}
+        }
+    }
+    let mut message = message.replace(api_key, "[REDACTED]");
+    if let Some(body) = body {
+        scrub(&mut message, body, false);
+    }
+    message
 }

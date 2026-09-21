@@ -3,6 +3,52 @@
 All notable changes to `elevenlabs-cli` are listed here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org).
 
+## [0.4.0] — 2026-09-21
+
+### Added
+
+- `api list` discovers the 391 HTTP operations in the bundled 2026-09-21
+  ElevenLabs OpenAPI snapshot. It returns a compact group index by default and
+  supports nested group prefixes, text search, and `--all`.
+- `api schema OPERATION` returns one operation's parameters, request body,
+  responses, and complete referenced-component closure. Dotted SDK aliases and
+  OpenAPI operationId values identify operations.
+- `api call OPERATION` maps repeatable path, query, header, body field, and
+  multipart file inputs to the schema. Inline JSON and `@file.json` bodies are
+  supported, as are streamed multipart uploads and incremental response files.
+- `--dry-run` validates and previews requests offline without credentials or an
+  API call. Credential-like fields are redacted from previews and responses.
+
+### Safety and validation
+
+- Live DELETE and explicit removal/bulk-deletion requests require `--confirm`; dry runs do not.
+- Binary and streaming responses require a new `--output` file. Existing files
+  are not overwritten, and partial files are removed after a failed request or
+  download.
+- Redirects are reported without following them, preventing configured
+  credentials from being forwarded to another origin.
+- Local checks cover required inputs, schema types, enums, bounds, and container
+  lengths. Provider-side formats, patterns, business rules, and cross-field
+  constraints remain authoritative.
+
+### Maintenance
+
+- A standard-library Python checker validates route identities, aliases,
+  references, parameters, and supported request media. CI validates the
+  vendored snapshot on changes and runs a weekly live drift check; the shipped
+  Rust binary has no Python dependency.
+- The earlier audit found 94 operations represented by curated commands. The
+  generic API surface makes the remaining 297 bundled HTTP operations
+  addressable without replacing the focused commands.
+
+### Known limits
+
+- The generic surface does not implement WebSocket APIs, automatic pagination,
+  or automatic retries. Snapshot coverage does not mean every operation and
+  parameter combination has been exercised against a live account.
+- The dated v0.3.3 tool comparison remains valid for its recorded measurements,
+  but its pre-v0.4.0 API coverage gap is now historical.
+
 ## [0.3.3] — 2026-09-21
 
 ### Added

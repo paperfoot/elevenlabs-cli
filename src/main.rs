@@ -72,6 +72,17 @@ fn main() {
         return;
     }
 
+    if let Commands::Api { action } = &cli.command {
+        match commands::api::local(ctx, action) {
+            Ok(true) => return,
+            Ok(false) => {}
+            Err(error) => {
+                output::print_error(ctx.format, &error);
+                std::process::exit(error.exit_code());
+            }
+        }
+    }
+
     // Construct a Tokio runtime once for commands that need HTTP.
     let rt = match tokio::runtime::Runtime::new() {
         Ok(rt) => rt,
@@ -86,6 +97,7 @@ fn main() {
 
     let result = rt.block_on(async move {
         match cli.command {
+            Commands::Api { action } => commands::api::run(ctx, action).await,
             // Meta / framework commands
             Commands::AgentInfo { command } => commands::agent_info::run(command.as_deref()),
             Commands::Skill { action } => match action {

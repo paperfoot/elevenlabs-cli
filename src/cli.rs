@@ -28,6 +28,11 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    /// Discover and call every HTTP operation in the bundled official API schema
+    Api {
+        #[command(subcommand)]
+        action: ApiAction,
+    },
     // ── Domain: speech ──────────────────────────────────────────────────────
     /// Convert text to speech
     #[command(visible_alias = "speak")]
@@ -158,6 +163,59 @@ pub enum Commands {
     /// Run environment + dependency diagnostics
     #[command(after_long_help = crate::help::DOCTOR_HELP)]
     Doctor(DoctorArgs),
+}
+
+#[derive(Subcommand)]
+pub enum ApiAction {
+    /// List API groups; filter a group or search to see its operations
+    List {
+        #[arg(long)]
+        group: Option<String>,
+        #[arg(long)]
+        search: Option<String>,
+        /// List every operation (larger output)
+        #[arg(long)]
+        all: bool,
+    },
+    /// Show one operation's parameters, bodies, responses and referenced types
+    Schema { operation: String },
+    /// Call an operation by its dotted SDK name or OpenAPI operationId
+    #[command(
+        after_help = "Examples:\n  elevenlabs api call history.list --query page_size=2\n  elevenlabs api call voices.get --path voice_id=VOICE_ID --dry-run\n  elevenlabs api call audio_isolation.convert --file audio=sample.wav --output isolated.mp3\n  elevenlabs api schema workspace.members.list\n\nUse --body @request.json for nested JSON. Repeat --query for array values.\nNo automatic retries or pagination: inspect the response cursor before the next call."
+    )]
+    Call(ApiCallArgs),
+}
+
+#[derive(clap::Args)]
+pub struct ApiCallArgs {
+    pub operation: String,
+    /// Required path parameter, NAME=VALUE (repeatable)
+    #[arg(long, value_name = "NAME=VALUE")]
+    pub path: Vec<String>,
+    /// Query parameter, NAME=VALUE (repeat for array parameters)
+    #[arg(long, value_name = "NAME=VALUE")]
+    pub query: Vec<String>,
+    /// Schema-declared header, NAME=VALUE; authentication uses configured API key
+    #[arg(long, value_name = "NAME=VALUE")]
+    pub header: Vec<String>,
+    /// JSON request body or @file.json (never implicitly reads stdin)
+    #[arg(long, value_name = "JSON|@FILE", conflicts_with_all = ["field", "file"])]
+    pub body: Option<String>,
+    /// Top-level body field, NAME=VALUE; objects/arrays use JSON (repeatable)
+    #[arg(long, value_name = "NAME=VALUE")]
+    pub field: Vec<String>,
+    /// Multipart file, FIELD=PATH (repeat for file arrays)
+    #[arg(long, value_name = "FIELD=PATH")]
+    pub file: Vec<String>,
+    /// Stream response bytes to a new file; required for audio/video/archive/stream responses
+    #[arg(short, long)]
+    pub output: Option<std::path::PathBuf>,
+    /// Validate locally and preview the request with credentials redacted
+    #[arg(long)]
+    pub dry_run: bool,
+    /// Confirm a DELETE, bulk deletion, or removal operation
+    #[arg(long)]
+    pub confirm: bool,
 }
 
 // ── TTS ────────────────────────────────────────────────────────────────────

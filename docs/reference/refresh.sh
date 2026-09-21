@@ -9,11 +9,16 @@ REPO="$(cd "$HERE/../.." && pwd)"
 SPEC="$HERE/openapi.elevenlabs.json"
 ENDPOINTS="$HERE/endpoints-inventory.txt"
 CLI_ENDPOINTS="$HERE/cli-endpoints.txt"
+CHECKER="$HERE/check-api-schema.py"
 
 UPSTREAM="${ELEVENLABS_OPENAPI_URL:-https://api.elevenlabs.io/openapi.json}"
 
 echo "→ fetching $UPSTREAM"
-curl -fsSL "$UPSTREAM" -o "$SPEC"
+TEMP_SPEC="$(mktemp "${TMPDIR:-/tmp}/elevenlabs-openapi.XXXXXX")"
+trap 'rm -f "$TEMP_SPEC"' EXIT
+curl -fsSL "$UPSTREAM" -o "$TEMP_SPEC"
+python3 "$CHECKER" --spec "$TEMP_SPEC"
+mv "$TEMP_SPEC" "$SPEC"
 bytes=$(wc -c < "$SPEC" | tr -d ' ')
 echo "  saved $SPEC ($bytes bytes)"
 
@@ -23,10 +28,11 @@ import json, sys
 spec_path, out_path = sys.argv[1], sys.argv[2]
 with open(spec_path) as f:
     spec = json.load(f)
+http_methods = {"delete", "get", "head", "options", "patch", "post", "put", "trace"}
 lines = []
 for path, methods in sorted(spec.get("paths", {}).items()):
-    for method, op in methods.items():
-        if method.startswith("x-"):
+    for method, op in sorted(methods.items()):
+        if method not in http_methods:
             continue
         summary = (op.get("summary") or "").strip().replace("\n", " ")
         op_id = op.get("operationId", "")
@@ -50,7 +56,7 @@ for root, _, files in os.walk(os.path.join(repo, "src")):
         rel = os.path.relpath(full, repo)
         with open(full) as fh:
             text = fh.read()
-        for m in re.finditer(r'"(/v1/[^"\s\\]+)"', text):
+        for m in re.finditer(r'"(/v\d+/[^"\s\\]+)"', text):
             raw = m.group(1)
             norm = re.sub(r"\{[^}]+\}", "{X}", raw)
             endpoints.add((norm, rel))

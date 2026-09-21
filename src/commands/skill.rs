@@ -10,7 +10,7 @@ use crate::output::{self, Ctx};
 fn skill_content() -> String {
     r#"---
 name: elevenlabs
-description: Generate speech, transcribe audio, make music or sound effects, manage voices and ElevenLabs agents or phone calls using the elevenlabs CLI.
+description: Generate speech, transcribe audio, make music or sound effects, manage voices and agents, or call schema-backed ElevenLabs HTTP operations using the elevenlabs CLI.
 ---
 
 # ElevenLabs CLI
@@ -21,6 +21,9 @@ or group needed for the task:
 ```bash
 elevenlabs agent-info --command tts
 elevenlabs agent-info --command "music compose"
+elevenlabs api list --group workspace
+elevenlabs api schema history.list
+elevenlabs api call history.list --query page_size=2 --dry-run
 elevenlabs voices --help
 elevenlabs tts "Hello, world" -o hello.mp3
 ```
@@ -30,6 +33,10 @@ when piped or with `--json`: `{version,status,data|error}`. Errors go to stderr.
 Exit codes: 0 success, 1 runtime, 2 config/auth, 3 bad input, 4 rate limited.
 Use `elevenlabs config check` to verify authentication. Full discovery remains
 available with `elevenlabs agent-info`; it is usually unnecessary for one task.
+For HTTP operations outside the focused commands, discover with `api list`,
+inspect one typed request/response with `api schema`, then preview with
+`api call OPERATION --dry-run`. Live DELETE and removal calls require `--confirm`; binary
+responses require a new `--output` file.
 "#
     .to_string()
 }

@@ -15,6 +15,15 @@ pub fn run(command: Option<&str>) -> Result<(), AppError> {
         "description": env!("CARGO_PKG_DESCRIPTION"),
         "homepage": env!("CARGO_PKG_HOMEPAGE"),
         "commands": {
+            "api list": {
+                "description": "Offline catalog of all HTTP operations in the bundled official OpenAPI schema. Defaults to group counts for compact discovery.",
+                "options": ["--group <prefix>", "--search <text>", "--all"]
+            },
+            "api schema <operation>": "Offline scoped request/response schema with its referenced types. Accepts a dotted SDK operation name or OpenAPI operationId.",
+            "api call <operation>": {
+                "description": "Call any bundled HTTP operation. Validates required inputs, types, enums and bounds. Server validates formats and business rules. DELETE and removal operations require --confirm. Audio, video, archives and stream responses require --output. No implicit pagination or retries.",
+                "options": ["--path <name=value> (repeatable)", "--query <name=value> (repeatable for arrays)", "--header <name=value>", "--body <json|@file>", "--field <name=value> (repeatable)", "--file <field=path> (repeatable)", "--output <new-file>", "--dry-run", "--confirm"]
+            },
             "tts <text>": {
                 "description": "Convert text to speech. Writes an audio file. Supports streaming \
                  (--stream routes to /stream endpoint) and per-character alignment JSON \
