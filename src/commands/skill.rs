@@ -10,46 +10,26 @@ use crate::output::{self, Ctx};
 fn skill_content() -> String {
     r#"---
 name: elevenlabs
-description: >
-  Use when the user asks to generate speech (TTS), transcribe audio (STT),
-  make sound effects, clone or design voices, browse the ElevenLabs voice
-  library, or manage conversational AI agents and phone calls via the
-  ElevenLabs API. Run `elevenlabs agent-info` for the full capability
-  manifest and every flag/exit-code the CLI supports.
+description: Generate speech, transcribe audio, make music or sound effects, manage voices and ElevenLabs agents or phone calls using the elevenlabs CLI.
 ---
 
 # ElevenLabs CLI
 
-Agent-friendly CLI wrapping the ElevenLabs AI audio platform. One binary
-replaces the MCP server, covers the whole API surface, and auto-switches
-between human-readable and JSON output.
-
-## Quick start
+Start with `elevenlabs --help` for the command index. Inspect only the command
+or group needed for the task:
 
 ```bash
-# One-time auth
-export ELEVENLABS_API_KEY=sk_...
-elevenlabs config check
-
-# Core commands
+elevenlabs agent-info --command tts
+elevenlabs agent-info --command "music compose"
+elevenlabs voices --help
 elevenlabs tts "Hello, world" -o hello.mp3
-elevenlabs stt voicenote.m4a
-elevenlabs sfx "waves crashing on a beach" --duration 5
-elevenlabs voices list
-elevenlabs agents list
-elevenlabs user subscription
 ```
 
-## Discovery
-
-```bash
-elevenlabs agent-info      # full machine-readable capability manifest
-elevenlabs --help          # human help
-```
-
-All commands accept `--json` (auto-enabled when piped) and emit a consistent
-envelope `{ version, status, data|error }`. Exit codes are semantic:
-`0=ok, 1=transient, 2=config/auth, 3=bad input, 4=rate limited`.
+`agent-info` returns raw JSON. Other commands return compact JSON envelopes
+when piped or with `--json`: `{version,status,data|error}`. Errors go to stderr.
+Exit codes: 0 success, 1 runtime, 2 config/auth, 3 bad input, 4 rate limited.
+Use `elevenlabs config check` to verify authentication. Full discovery remains
+available with `elevenlabs agent-info`; it is usually unnecessary for one task.
 "#
     .to_string()
 }
@@ -130,7 +110,7 @@ pub fn install(ctx: Ctx) -> Result<(), AppError> {
                 item.path.dimmed()
             );
         }
-    });
+    })?;
 
     Ok(())
 }
@@ -184,7 +164,7 @@ pub fn status(ctx: Ctx) -> Result<(), AppError> {
             ]);
         }
         println!("{table}");
-    });
+    })?;
 
     Ok(())
 }

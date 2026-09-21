@@ -92,7 +92,7 @@ pub async fn run(
                 format!("elevenlabs phone batch show {batch_id}").dimmed()
             );
         }
-    });
+    })?;
     Ok(())
 }
 

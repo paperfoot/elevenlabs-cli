@@ -67,6 +67,6 @@ pub async fn run(
             r["language_code"].as_str().unwrap_or("").dimmed(),
             r["format"].as_str().unwrap_or("").dimmed(),
         );
-    });
+    })?;
     Ok(())
 }

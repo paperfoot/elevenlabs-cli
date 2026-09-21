@@ -36,6 +36,9 @@ pub enum AppError {
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
+    #[error("Output failed: {0}")]
+    Output(String),
+
     #[error("HTTP error: {0}")]
     Http(String),
 
@@ -77,6 +80,7 @@ impl AppError {
             Self::Api { .. }
             | Self::Transient(_)
             | Self::Io(_)
+            | Self::Output(_)
             | Self::Http(_)
             | Self::Update(_) => 1,
         }
@@ -94,6 +98,7 @@ impl AppError {
             Self::Api { .. } => "api_error",
             Self::Transient(_) => "transient_error",
             Self::Io(_) => "io_error",
+            Self::Output(_) => "output_error",
             Self::Http(_) => "http_error",
             Self::Update(_) => "update_error",
         }
@@ -135,6 +140,7 @@ impl AppError {
                 "Retry the command; check status.elevenlabs.io if it persists".into()
             }
             Self::Transient(_) | Self::Io(_) | Self::Http(_) => "Retry the command".into(),
+            Self::Output(_) => "The operation may have completed. Check its result before repeating it; list status commands with: elevenlabs --help".into(),
             Self::Update(_) => "Retry later, or run: cargo install elevenlabs".into(),
         }
     }

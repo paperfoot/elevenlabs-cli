@@ -70,6 +70,6 @@ pub async fn run(
             ]);
         }
         println!("{t}");
-    });
+    })?;
     Ok(())
 }

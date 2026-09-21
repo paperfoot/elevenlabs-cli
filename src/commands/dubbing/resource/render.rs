@@ -23,6 +23,6 @@ pub async fn run(
             language_code.bold()
         );
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
-    });
+    })?;
     Ok(())
 }

@@ -34,6 +34,6 @@ pub async fn run(
     output::print_success_or(ctx, &resp, |_| {
         use owo_colors::OwoColorize;
         println!("{} updated tool {}", "~".yellow(), tool_id.dimmed());
-    });
+    })?;
     Ok(())
 }

@@ -125,7 +125,7 @@ async fn list(ctx: Ctx, client: &ElevenLabsClient, args: ListArgs) -> Result<(),
             ]);
         }
         println!("{t}");
-    });
+    })?;
     Ok(())
 }
 
@@ -144,6 +144,6 @@ async fn delete(
             "-".red(),
             history_item_id.dimmed()
         );
-    });
+    })?;
     Ok(())
 }

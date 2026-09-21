@@ -42,6 +42,6 @@ pub async fn run(
             "~".yellow(),
             account_id.dimmed()
         );
-    });
+    })?;
     Ok(())
 }

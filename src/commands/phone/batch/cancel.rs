@@ -19,6 +19,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, batch_id: &str) -> Result<
     output::print_success_or(ctx, &result, |_| {
         use owo_colors::OwoColorize;
         println!("{} cancelled batch {}", "~".yellow(), batch_id.dimmed());
-    });
+    })?;
     Ok(())
 }

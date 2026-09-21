@@ -32,7 +32,7 @@ async fn info(ctx: Ctx, client: &ElevenLabsClient) -> Result<(), AppError> {
         {
             println!("{} {}", "tier:".dimmed(), tier);
         }
-    });
+    })?;
     Ok(())
 }
 
@@ -56,6 +56,6 @@ async fn subscription(ctx: Ctx, client: &ElevenLabsClient) -> Result<(), AppErro
         if let Some(reset) = get("next_character_count_reset_unix") {
             println!("  {} {}", "reset_unix:".dimmed(), reset);
         }
-    });
+    })?;
     Ok(())
 }

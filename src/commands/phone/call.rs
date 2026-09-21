@@ -121,7 +121,7 @@ pub async fn run(
             r["provider"].as_str().unwrap_or("").bold(),
             r["to"].as_str().unwrap_or("").bold()
         );
-    });
+    })?;
     Ok(())
 }
 

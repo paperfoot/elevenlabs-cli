@@ -63,6 +63,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, voice_id: &str) -> Result<
         // Full JSON at the bottom for anything we don't render.
         println!();
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
-    });
+    })?;
     Ok(())
 }

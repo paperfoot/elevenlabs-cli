@@ -2,6 +2,7 @@
 //! the CLI actually ships.
 
 use assert_cmd::Command;
+use serde_json::{Map, Value};
 
 fn bin() -> Command {
     Command::cargo_bin("elevenlabs").unwrap()
@@ -11,6 +12,26 @@ fn agent_info() -> serde_json::Value {
     let out = bin().arg("agent-info").output().unwrap();
     assert!(out.status.success(), "agent-info must exit 0");
     serde_json::from_slice(&out.stdout).expect("agent-info must be valid JSON")
+}
+
+fn scoped_agent_info(command: &str) -> std::process::Output {
+    bin()
+        .args(["agent-info", "--command", command])
+        .output()
+        .unwrap()
+}
+
+fn command_map(info: &Value) -> &Map<String, Value> {
+    info["commands"]
+        .as_object()
+        .expect("agent-info commands must be an object")
+}
+
+fn without_commands(mut info: Value) -> Value {
+    info.as_object_mut()
+        .expect("agent-info must be an object")
+        .remove("commands");
+    info
 }
 
 #[test]
@@ -173,4 +194,148 @@ fn current_model_flags_are_routable_in_help() {
     assert!(usage.contains("--extract-composition-plan"));
     assert!(usage.contains("--model"));
     assert!(usage.contains("music_v2_5"));
+}
+
+#[test]
+fn scoped_leaf_preserves_legacy_key_and_top_level_metadata() {
+    let full = agent_info();
+    let output = scoped_agent_info("tts");
+    assert!(output.status.success());
+    let scoped: Value = serde_json::from_slice(&output.stdout).unwrap();
+
+    let commands = command_map(&scoped);
+    assert_eq!(commands.len(), 1);
+    assert!(commands.contains_key("tts <text>"));
+    assert_eq!(without_commands(scoped), without_commands(full));
+}
+
+#[test]
+fn scoped_group_returns_only_canonical_descendants() {
+    let full = agent_info();
+    let output = scoped_agent_info("music");
+    assert!(output.status.success());
+    let scoped: Value = serde_json::from_slice(&output.stdout).unwrap();
+    let commands = command_map(&scoped);
+
+    assert!(!commands.is_empty());
+    assert!(commands.contains_key("music compose [prompt]"));
+    assert!(commands.contains_key("music upload <file>"));
+    assert!(commands.keys().all(|key| key.starts_with("music ")));
+
+    let expected = command_map(&full)
+        .iter()
+        .filter(|(key, _)| key.starts_with("music "))
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect::<Map<_, _>>();
+    assert_eq!(commands, &expected);
+}
+
+#[test]
+fn scoped_nested_leaf_returns_one_command() {
+    let output = scoped_agent_info("dubbing resource transcribe");
+    assert!(output.status.success());
+    let scoped: Value = serde_json::from_slice(&output.stdout).unwrap();
+    let commands = command_map(&scoped);
+    assert_eq!(commands.len(), 1);
+    assert!(commands.contains_key("dubbing resource transcribe <dubbing_id>"));
+}
+
+#[test]
+fn scoped_update_returns_one_command_despite_legacy_check_entry() {
+    let output = scoped_agent_info("update");
+    assert!(output.status.success());
+    let scoped: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(command_map(&scoped).len(), 1);
+    assert!(command_map(&scoped).contains_key("update"));
+}
+
+#[test]
+fn scoped_discovery_works_through_info_alias_with_global_flags() {
+    let output = bin()
+        .args(["info", "--command", "tts", "--json", "--quiet"])
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let scoped: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(command_map(&scoped).len(), 1);
+    assert!(command_map(&scoped).contains_key("tts <text>"));
+}
+
+#[test]
+fn scoped_discovery_rejects_empty_unknown_alias_partial_and_extra_tokens() {
+    for invalid in ["", "does-not-exist", "speak", "mus", "music compose extra"] {
+        let output = scoped_agent_info(invalid);
+        assert_eq!(
+            output.status.code(),
+            Some(3),
+            "{invalid:?} must be rejected: stderr={}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            output.stdout.is_empty(),
+            "invalid filter {invalid:?} leaked to stdout"
+        );
+        let error: Value = serde_json::from_slice(&output.stderr)
+            .unwrap_or_else(|_| panic!("invalid filter {invalid:?} must emit JSON on stderr"));
+        assert_eq!(error["status"], "error");
+        assert_eq!(error["error"]["code"], "invalid_input");
+        assert!(error["error"]["suggestion"].is_string());
+    }
+}
+
+#[test]
+fn scoped_discovery_does_not_load_config_or_contact_the_api() {
+    let tmp = tempfile::tempdir().unwrap();
+    let malformed = tmp.path().join("config.toml");
+    std::fs::write(&malformed, b"this is not = valid = toml [").unwrap();
+
+    let output = bin()
+        .env("ELEVENLABS_CLI_CONFIG", &malformed)
+        .env("ELEVENLABS_API_BASE_URL", "http://127.0.0.1:1")
+        .env_remove("ELEVENLABS_API_KEY")
+        .env_remove("ELEVENLABS_CLI_API_KEY")
+        .args(["agent-info", "--command", "tts"])
+        .output()
+        .unwrap();
+
+    assert!(
+        output.status.success(),
+        "discovery must be offline and config-independent: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let info: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert!(command_map(&info).contains_key("tts <text>"));
+}
+
+#[test]
+fn every_manifest_command_key_resolves_to_real_canonical_help() {
+    let info = agent_info();
+    for manifest_key in command_map(&info).keys() {
+        let path = manifest_key
+            .split_whitespace()
+            .take_while(|token| {
+                !token.starts_with('<') && !token.starts_with('[') && !token.starts_with("--")
+            })
+            .collect::<Vec<_>>();
+        assert!(!path.is_empty(), "empty command path for {manifest_key}");
+
+        let tmp = tempfile::tempdir().unwrap();
+        let malformed = tmp.path().join("config.toml");
+        std::fs::write(&malformed, b"not valid toml = [").unwrap();
+        let output = bin()
+            .env("ELEVENLABS_CLI_CONFIG", &malformed)
+            .env("ELEVENLABS_API_BASE_URL", "http://127.0.0.1:1")
+            .env_remove("ELEVENLABS_API_KEY")
+            .env_remove("ELEVENLABS_CLI_API_KEY")
+            .args(&path)
+            .arg("--help")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "manifest key {manifest_key:?} does not route through canonical path {path:?}: stderr={}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
 }

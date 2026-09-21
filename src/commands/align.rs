@@ -124,7 +124,7 @@ pub async fn run(ctx: Ctx, args: AlignArgs) -> Result<(), AppError> {
         words: words_arr,
         characters: chars_arr,
     };
-    output::print_success_or(ctx, &result, print_human);
+    output::print_success_or(ctx, &result, print_human)?;
     Ok(())
 }
 

@@ -99,6 +99,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: ListArgs) -> Result<
             ]);
         }
         println!("{t}");
-    });
+    })?;
     Ok(())
 }

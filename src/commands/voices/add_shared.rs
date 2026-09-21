@@ -63,6 +63,6 @@ pub async fn run(
             saved_name.bold(),
             saved_id.dimmed()
         );
-    });
+    })?;
     Ok(())
 }

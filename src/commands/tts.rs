@@ -161,7 +161,7 @@ pub async fn run(ctx: Ctx, mut args: TtsArgs) -> Result<(), AppError> {
             bytes_written: audio.len(),
         };
 
-        output::print_success_or(ctx, &result, print_human);
+        output::print_success_or(ctx, &result, print_human)?;
         return Ok(());
     }
 
@@ -195,7 +195,7 @@ pub async fn run(ctx: Ctx, mut args: TtsArgs) -> Result<(), AppError> {
         bytes_written,
     };
 
-    output::print_success_or(ctx, &result, print_human);
+    output::print_success_or(ctx, &result, print_human)?;
     Ok(())
 }
 

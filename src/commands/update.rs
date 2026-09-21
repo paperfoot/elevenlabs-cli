@@ -24,7 +24,7 @@ pub fn run(ctx: Ctx, check: bool, config: &AppConfig) -> Result<(), AppError> {
         };
         output::print_success_or(ctx, &result, |_| {
             println!("Self-update is disabled in config");
-        });
+        })?;
         return Ok(());
     }
 
@@ -62,7 +62,7 @@ pub fn run(ctx: Ctx, check: bool, config: &AppConfig) -> Result<(), AppError> {
                 );
                 println!("Run `elevenlabs update` to install");
             }
-        });
+        })?;
     } else {
         let release = updater
             .update()
@@ -86,7 +86,7 @@ pub fn run(ctx: Ctx, check: bool, config: &AppConfig) -> Result<(), AppError> {
                 println!("Updated: v{} -> v{}", r.current_version, r.latest_version);
                 println!("Run `elevenlabs skill install` to update agent skills");
             }
-        });
+        })?;
     }
 
     Ok(())

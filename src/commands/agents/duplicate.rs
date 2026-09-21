@@ -26,6 +26,6 @@ pub async fn run(
             agent_id.dimmed(),
             new_id.bold()
         );
-    });
+    })?;
     Ok(())
 }

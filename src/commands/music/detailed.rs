@@ -177,7 +177,7 @@ pub async fn run(
             r["bytes_written"].as_f64().unwrap_or(0.0) / 1024.0,
         );
         println!("  metadata: {}", r["metadata_path"].as_str().unwrap_or(""));
-    });
+    })?;
     Ok(())
 }
 

@@ -131,6 +131,6 @@ pub async fn run(
             "poll:".dimmed(),
             format!("elevenlabs dubbing show {dubbing_id}").dimmed()
         );
-    });
+    })?;
     Ok(())
 }

@@ -53,6 +53,6 @@ pub async fn run(
         if archive {
             println!("  {}", "archived".yellow());
         }
-    });
+    })?;
     Ok(())
 }

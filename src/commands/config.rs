@@ -87,7 +87,7 @@ pub fn show(ctx: Ctx, cfg: &AppConfig) -> Result<(), AppError> {
             m.update.repo,
             m.update.enabled
         );
-    });
+    })?;
 
     Ok(())
 }
@@ -112,7 +112,7 @@ pub fn path(ctx: Ctx) -> Result<(), AppError> {
             use owo_colors::OwoColorize;
             println!("  {}", "(file does not exist, using defaults)".dimmed());
         }
-    });
+    })?;
     Ok(())
 }
 
@@ -158,7 +158,7 @@ pub fn set(ctx: Ctx, key: &str, value: &str) -> Result<(), AppError> {
     output::print_success_or(ctx, &result, |_| {
         use owo_colors::OwoColorize;
         println!("{} {} saved to {}", "+".green(), key, path.display());
-    });
+    })?;
     Ok(())
 }
 
@@ -202,7 +202,7 @@ pub async fn check(ctx: Ctx, cfg: &AppConfig) -> Result<(), AppError> {
             "ok:".dimmed(),
             r.voices_available
         );
-    });
+    })?;
     Ok(())
 }
 
@@ -257,6 +257,6 @@ pub fn init(ctx: Ctx, api_key: Option<String>) -> Result<(), AppError> {
             "  run {} to verify the key works",
             "elevenlabs config check".bold()
         );
-    });
+    })?;
     Ok(())
 }

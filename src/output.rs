@@ -2,7 +2,7 @@
 //! JSON envelope when piped or `--json`, coloured output on a TTY.
 
 use serde::Serialize;
-use std::io::IsTerminal;
+use std::io::{IsTerminal, Write};
 
 use crate::error::AppError;
 
@@ -43,42 +43,46 @@ impl Ctx {
     }
 }
 
-/// Serialize to pretty JSON; fall back to an error envelope on failure.
-pub fn safe_json_string<T: Serialize>(value: &T) -> String {
-    match serde_json::to_string_pretty(value) {
-        Ok(s) => s,
-        Err(e) => {
-            let fallback = serde_json::json!({
-                "version": "1",
-                "status": "error",
-                "error": {
-                    "code": "serialize",
-                    "message": e.to_string(),
-                    "suggestion": "Retry the command",
-                },
-            });
-            serde_json::to_string_pretty(&fallback).unwrap_or_else(|_| {
-                r#"{"version":"1","status":"error","error":{"code":"serialize","message":"serialization failed","suggestion":"Retry the command"}}"#.to_string()
-            })
-        }
-    }
+/// Serialize before writing, so serialization errors never produce success output.
+/// Machine output is compact; consumers can use `jq` when indentation is useful.
+fn write_json<T: Serialize>(writer: &mut impl Write, value: &T) -> Result<(), AppError> {
+    let mut bytes = serde_json::to_vec(value)
+        .map_err(|_| AppError::Output("failed to serialize command output".into()))?;
+    bytes.push(b'\n');
+    writer
+        .write_all(&bytes)
+        .map_err(|error| AppError::Output(error.to_string()))?;
+    Ok(())
+}
+
+pub fn print_json<T: Serialize>(value: &T) -> Result<(), AppError> {
+    write_json(&mut std::io::stdout().lock(), value)
+}
+
+#[derive(Serialize)]
+struct SuccessEnvelope<'a, T> {
+    version: &'static str,
+    status: &'static str,
+    data: &'a T,
 }
 
 /// Print success envelope (JSON) or call the human closure.
 /// Quiet suppresses human output. JSON is never suppressed.
-pub fn print_success_or<T: Serialize, F: FnOnce(&T)>(ctx: Ctx, data: &T, human: F) {
+pub fn print_success_or<T: Serialize, F: FnOnce(&T)>(
+    ctx: Ctx,
+    data: &T,
+    human: F,
+) -> Result<(), AppError> {
     match ctx.format {
-        Format::Json => {
-            let envelope = serde_json::json!({
-                "version": "1",
-                "status": "success",
-                "data": data,
-            });
-            println!("{}", safe_json_string(&envelope));
-        }
+        Format::Json => print_json(&SuccessEnvelope {
+            version: "1",
+            status: "success",
+            data,
+        })?,
         Format::Human if !ctx.quiet => human(data),
         Format::Human => {}
     }
+    Ok(())
 }
 
 pub fn print_error(format: Format, err: &AppError) {
@@ -92,22 +96,30 @@ pub fn print_error(format: Format, err: &AppError) {
         },
     });
     match format {
-        Format::Json => eprintln!("{}", safe_json_string(&envelope)),
+        Format::Json => {
+            // Error reporting must not panic if the consumer also closed stderr.
+            let _ = write_json(&mut std::io::stderr().lock(), &envelope);
+        }
         Format::Human => {
             use owo_colors::OwoColorize;
-            eprintln!("{} {}", "error:".red().bold(), err);
-            eprintln!("  {}", err.suggestion().dimmed());
+            let _ = writeln!(
+                std::io::stderr().lock(),
+                "{} {}\n  {}",
+                "error:".red().bold(),
+                err,
+                err.suggestion().dimmed()
+            );
         }
     }
 }
 
-pub fn print_help_json(err: clap::Error) {
+pub fn print_help_json(err: clap::Error) -> Result<(), AppError> {
     let envelope = serde_json::json!({
         "version": "1",
         "status": "success",
         "data": { "usage": err.to_string().trim_end() },
     });
-    println!("{}", safe_json_string(&envelope));
+    print_json(&envelope)
 }
 
 pub fn print_clap_error(format: Format, err: &clap::Error) {
@@ -122,10 +134,48 @@ pub fn print_clap_error(format: Format, err: &clap::Error) {
                     "suggestion": "Check arguments with: elevenlabs --help",
                 },
             });
-            eprintln!("{}", safe_json_string(&envelope));
+            let _ = write_json(&mut std::io::stderr().lock(), &envelope);
         }
         Format::Human => {
-            eprint!("{err}");
+            let _ = write!(std::io::stderr().lock(), "{err}");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct FailsSerialization;
+
+    impl Serialize for FailsSerialization {
+        fn serialize<S: serde::Serializer>(&self, _: S) -> Result<S::Ok, S::Error> {
+            Err(serde::ser::Error::custom("test failure"))
+        }
+    }
+
+    #[test]
+    fn serialization_failure_writes_nothing_and_returns_runtime_error() {
+        let mut output = Vec::new();
+        let envelope = SuccessEnvelope {
+            version: "1",
+            status: "success",
+            data: &FailsSerialization,
+        };
+        let err = write_json(&mut output, &envelope).unwrap_err();
+        assert_eq!(err.exit_code(), 1);
+        assert!(output.is_empty());
+    }
+
+    #[test]
+    fn write_failure_returns_runtime_error() {
+        let mut insufficient = [0_u8; 1];
+        let err = write_json(
+            &mut insufficient.as_mut_slice(),
+            &serde_json::json!({"ok": true}),
+        )
+        .unwrap_err();
+        assert_eq!(err.exit_code(), 1);
+        assert_eq!(err.error_code(), "output_error");
     }
 }

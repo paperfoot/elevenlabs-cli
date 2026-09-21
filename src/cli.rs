@@ -10,7 +10,8 @@ use clap::{Parser, Subcommand};
     about = "Agent-friendly CLI for the ElevenLabs AI audio platform",
     long_about = "Text-to-speech, speech-to-text, sound effects, voice cloning, \
                   music generation, and conversational AI agents from your terminal. \
-                  Use --json for machine-readable output (auto-enabled when piped)."
+                  Use --json for machine-readable output (auto-enabled when piped).",
+    after_help = "Inspect one command: elevenlabs agent-info --command \"music compose\"\nInspect a group: elevenlabs agent-info --command voices\nGet flags and examples: elevenlabs tts --help"
 )]
 pub struct Cli {
     /// Force JSON output (auto-enabled when piped)
@@ -128,7 +129,11 @@ pub enum Commands {
     // ── Framework commands ──────────────────────────────────────────────────
     /// Machine-readable capability manifest
     #[command(visible_alias = "info")]
-    AgentInfo,
+    AgentInfo {
+        /// Show one canonical command or group (e.g. "music compose" or "voices")
+        #[arg(long, value_name = "PATH")]
+        command: Option<String>,
+    },
 
     /// Manage skill file installation across AI agent platforms
     Skill {

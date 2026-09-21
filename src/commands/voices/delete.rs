@@ -22,6 +22,6 @@ pub async fn run(
     output::print_success_or(ctx, &result, |_| {
         use owo_colors::OwoColorize;
         println!("{} deleted voice {}", "-".red(), voice_id.dimmed());
-    });
+    })?;
     Ok(())
 }

@@ -21,6 +21,6 @@ pub async fn run(
             dubbing_id.dimmed()
         );
         println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
-    });
+    })?;
     Ok(())
 }

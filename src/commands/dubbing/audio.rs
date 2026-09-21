@@ -45,6 +45,6 @@ pub async fn run(
             r["bytes_written"].as_f64().unwrap_or(0.0) / 1024.0,
             r["language_code"].as_str().unwrap_or("").dimmed()
         );
-    });
+    })?;
     Ok(())
 }

@@ -55,6 +55,6 @@ async fn list(ctx: Ctx, client: &ElevenLabsClient) -> Result<(), AppError> {
             ]);
         }
         println!("{t}");
-    });
+    })?;
     Ok(())
 }

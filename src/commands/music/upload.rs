@@ -75,6 +75,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: UploadArgs) -> Resul
             r["input"].as_str().unwrap_or("").bold(),
             r["song_id"].as_str().unwrap_or("(unknown)").dimmed()
         );
-    });
+    })?;
     Ok(())
 }

@@ -22,6 +22,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, agent_id: &str) -> Result<
         } else {
             println!("{}", serde_json::to_string_pretty(v).unwrap_or_default());
         }
-    });
+    })?;
     Ok(())
 }

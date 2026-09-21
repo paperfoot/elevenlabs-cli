@@ -91,6 +91,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: SimilarArgs) -> Resu
             ]);
         }
         println!("{t}");
-    });
+    })?;
     Ok(())
 }

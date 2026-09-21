@@ -166,7 +166,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
                 alignment_path: Some(alignment_path),
                 bytes_written: audio.len(),
             };
-            output::print_success_or(ctx, &result, print_human);
+            output::print_success_or(ctx, &result, print_human)?;
             Ok(())
         }
 
@@ -225,7 +225,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
                 alignment_path,
                 bytes_written,
             };
-            output::print_success_or(ctx, &result, print_human);
+            output::print_success_or(ctx, &result, print_human)?;
             Ok(())
         }
 
@@ -261,7 +261,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
                 alignment_path: None,
                 bytes_written,
             };
-            output::print_success_or(ctx, &result, print_human);
+            output::print_success_or(ctx, &result, print_human)?;
             Ok(())
         }
     }

@@ -173,7 +173,7 @@ pub async fn run(ctx: Ctx, args: SttArgs) -> Result<(), AppError> {
     // Save additional_formats content (SRT, DOCX, ...) to disk.
     write_exported_formats(&args, &resp, &mut result).await?;
 
-    output::print_success_or(ctx, &result, print_human);
+    output::print_success_or(ctx, &result, print_human)?;
 
     Ok(())
 }
@@ -817,7 +817,7 @@ async fn emit_webhook_pending(
         if let Some(id) = &r.transcription_id {
             println!("  transcription_id: {id}");
         }
-    });
+    })?;
     Ok(())
 }
 

@@ -24,6 +24,6 @@ pub async fn run(
     output::print_success_or(ctx, &result, |_| {
         use owo_colors::OwoColorize;
         println!("{} deleted batch {}", "-".red(), batch_id.dimmed());
-    });
+    })?;
     Ok(())
 }

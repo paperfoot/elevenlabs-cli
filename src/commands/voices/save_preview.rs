@@ -32,6 +32,6 @@ pub async fn run(
                 .unwrap_or("")
                 .dimmed()
         );
-    });
+    })?;
     Ok(())
 }

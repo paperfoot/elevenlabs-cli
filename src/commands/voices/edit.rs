@@ -140,7 +140,7 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: EditArgs) -> Result<
                 );
             }
         }
-    });
+    })?;
     Ok(())
 }
 

@@ -51,6 +51,6 @@ pub async fn run(
                 .unwrap_or(&agent_id)
                 .dimmed()
         );
-    });
+    })?;
     Ok(())
 }
