@@ -1,4 +1,4 @@
-//! voices design — POST /v1/text-to-voice/create-previews.
+//! voices design — POST /v1/text-to-voice/design.
 //!
 //! Writes each preview's audio_base_64 payload to disk when present. When
 //! `stream_previews=true` the server returns IDs only.
@@ -76,10 +76,7 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: DesignArgs) -> Resul
     }
 
     let resp: serde_json::Value = client
-        .post_json(
-            "/v1/text-to-voice/create-previews",
-            &serde_json::Value::Object(body),
-        )
+        .post_json("/v1/text-to-voice/design", &serde_json::Value::Object(body))
         .await?;
 
     let previews = resp

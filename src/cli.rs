@@ -298,8 +298,8 @@ pub struct SttArgs {
     pub save_words: Option<String>,
 
     // ── Model / language ───────────────────────────────────────────────────
-    /// Model ID. Default scribe_v2 (best accuracy); scribe_v1 for legacy.
-    #[arg(long, default_value = "scribe_v2", value_parser = ["scribe_v2", "scribe_v1"])]
+    /// Batch model ID (default scribe_v2); use scribe_v2_medical for clinical audio.
+    #[arg(long, default_value = "scribe_v2")]
     pub model: String,
 
     /// ISO 639-1 or ISO 639-3 language code (auto-detect when omitted).
@@ -339,7 +339,7 @@ pub struct SttArgs {
     #[arg(long, conflicts_with = "no_audio_events")]
     pub audio_events: bool,
 
-    /// Remove filler words and non-speech sounds (scribe_v2 only).
+    /// Remove filler words and non-speech sounds (scribe_v2 or scribe_v2_medical).
     #[arg(long)]
     pub no_verbatim: bool,
 
@@ -490,10 +490,6 @@ pub enum VoicesAction {
         #[arg(long, default_value = "100")]
         limit: u32,
 
-        /// Include legacy premade voices (/v1 compatibility)
-        #[arg(long)]
-        show_legacy: bool,
-
         /// Pagination cursor from a previous response
         #[arg(long, value_name = "TOKEN")]
         next_page_token: Option<String>,
@@ -543,8 +539,8 @@ pub enum VoicesAction {
         #[arg(long)]
         search: Option<String>,
 
-        /// Page number (1-indexed)
-        #[arg(long, default_value = "1")]
+        /// Page number (0-indexed)
+        #[arg(long, default_value = "0")]
         page: u32,
 
         /// Page size (1-100)
@@ -719,26 +715,6 @@ pub enum VoicesAction {
         /// Maximum voices to return (1-100)
         #[arg(long)]
         top_k: Option<u32>,
-
-        /// Gender filter
-        #[arg(long)]
-        gender: Option<String>,
-
-        /// Age filter
-        #[arg(long)]
-        age: Option<String>,
-
-        /// Accent filter
-        #[arg(long)]
-        accent: Option<String>,
-
-        /// Language filter
-        #[arg(long)]
-        language: Option<String>,
-
-        /// Use case filter
-        #[arg(long)]
-        use_case: Option<String>,
     },
 
     /// Edit a voice — rename, re-describe, update labels, add/remove samples
@@ -884,7 +860,7 @@ pub enum MusicAction {
         #[arg(long, value_parser = clap::value_parser!(u32).range(3000..=600000))]
         length_ms: Option<u32>,
 
-        /// Model ID (default music_v1)
+        /// Model ID (default music_v2_5; legacy section plans use music_v1)
         #[arg(long)]
         model: Option<String>,
     },
@@ -929,7 +905,7 @@ pub struct ComposeArgs {
     #[arg(long, value_name = "PATH", conflicts_with_all = ["prompt", "length_ms", "force_instrumental"])]
     pub composition_plan: Option<String>,
 
-    /// Model ID (default music_v1)
+    /// Model ID (default music_v2_5; legacy section plans use music_v1)
     #[arg(long)]
     pub model: Option<String>,
 
@@ -980,7 +956,7 @@ pub struct DetailedArgs {
     #[arg(long, value_name = "PATH", conflicts_with_all = ["prompt", "length_ms", "force_instrumental"])]
     pub composition_plan: Option<String>,
 
-    /// Model ID (default music_v1)
+    /// Model ID (default music_v2_5; legacy section plans use music_v1)
     #[arg(long)]
     pub model: Option<String>,
 
@@ -1027,7 +1003,7 @@ pub struct StreamArgs {
     #[arg(long, value_name = "PATH", conflicts_with_all = ["prompt", "length_ms", "force_instrumental"])]
     pub composition_plan: Option<String>,
 
-    /// Model ID (default music_v1)
+    /// Model ID (default music_v2_5; legacy section plans use music_v1)
     #[arg(long)]
     pub model: Option<String>,
 
@@ -1062,6 +1038,10 @@ pub struct UploadArgs {
     /// `music compose --composition-plan <file>`.
     #[arg(long = "extract-composition-plan")]
     pub extract_composition_plan: bool,
+
+    /// Model for the extracted plan (default music_v2_5). Requires --extract-composition-plan.
+    #[arg(long, requires = "extract_composition_plan")]
+    pub model: Option<String>,
 }
 
 #[derive(clap::Args, Debug, Clone)]
@@ -1175,18 +1155,9 @@ pub enum AgentsAction {
         #[arg(long, default_value = "en")]
         language: String,
 
-        /// LLM id. Default `gemini-3.1-flash-lite-preview` — the newest
-        /// Gemini flash preview the ElevenLabs Agents backend accepts (the
-        /// OpenAPI spec's `PromptAgentAPIModel.llm` *default* string is
-        /// `gemini-2.5-flash`, but that's the older stable release; 3.1 is
-        /// current, empirically working, and lower-latency for turn-based
-        /// voice agents). `gemini-3.1-flash-live-preview` / `gemini-3.1-
-        /// flash-preview` exist at Google but aren't in the ElevenLabs
-        /// allowlist yet. Discover the full allowlist with
-        /// `elevenlabs agents llms`. If `conversations show` reports 0
-        /// output tokens on the chosen LLM, the backend rejected it and
-        /// fell back silently — swap LLMs.
-        #[arg(long, default_value = "gemini-3.1-flash-lite-preview")]
+        /// LLM ID (default gemini-3.1-flash-lite, the stable replacement for the retired preview).
+        /// Discover supported models and deprecations with `elevenlabs agents llms`.
+        #[arg(long, default_value = "gemini-3.1-flash-lite")]
         llm: String,
 
         /// Temperature 0.0-1.0

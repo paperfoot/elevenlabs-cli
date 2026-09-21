@@ -1,5 +1,5 @@
 //! Verifies `voices similar` POSTs multipart to `/v1/similar-voices` with
-//! the audio file attached and forwards the filter form fields.
+//! the audio file attached and rejects removed demographic filter fields.
 //!
 //! Wiremock 0.6 doesn't parse multipart boundaries natively, so we just
 //! assert the endpoint path is hit and that the content-type is multipart.
@@ -74,7 +74,7 @@ async fn similar_posts_multipart_with_audio_file() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn similar_sends_filter_fields_in_multipart() {
+async fn similar_rejects_removed_filter_flags_before_network() {
     let mock = MockServer::start().await;
 
     // Use a catching mock that we can inspect after.
@@ -88,53 +88,37 @@ async fn similar_sends_filter_fields_in_multipart() {
 
     let (_audio_dir, audio_path) = temp_audio();
     let (_dir, cfg) = temp_config_with_key("sk_test_keyyyyyyyyy");
-    let out = bin()
-        .env("ELEVENLABS_CLI_CONFIG", &cfg)
-        .env("ELEVENLABS_API_BASE_URL", mock.uri())
-        .env_remove("ELEVENLABS_API_KEY")
-        .args([
-            "voices",
-            "similar",
-            audio_path.to_str().unwrap(),
-            "--gender",
-            "female",
-            "--age",
-            "young",
-            "--accent",
-            "british",
-            "--language",
-            "en",
-            "--use-case",
-            "narration",
-        ])
-        .output()
-        .unwrap();
-
-    assert!(
-        out.status.success(),
-        "expected success; stderr={}",
-        String::from_utf8_lossy(&out.stderr)
-    );
-
-    // Inspect the received request to confirm the multipart body includes
-    // the filter fields verbatim.
-    let reqs = mock.received_requests().await.unwrap();
-    assert_eq!(reqs.len(), 1);
-    let body = String::from_utf8_lossy(&reqs[0].body);
-    for needle in [
-        "name=\"audio_file\"",
-        "name=\"gender\"",
-        "name=\"age\"",
-        "name=\"accent\"",
-        "name=\"language\"",
-        "name=\"use_case\"",
+    for (flag, value) in [
+        ("--gender", "female"),
+        ("--age", "young"),
+        ("--accent", "british"),
+        ("--language", "en"),
+        ("--use-case", "narration"),
     ] {
+        let out = bin()
+            .env("ELEVENLABS_CLI_CONFIG", &cfg)
+            .env("ELEVENLABS_API_BASE_URL", mock.uri())
+            .env_remove("ELEVENLABS_API_KEY")
+            .args([
+                "voices",
+                "similar",
+                audio_path.to_str().unwrap(),
+                flag,
+                value,
+            ])
+            .output()
+            .unwrap();
+
+        assert_eq!(out.status.code(), Some(3), "{flag} must be rejected");
         assert!(
-            body.contains(needle),
-            "multipart body missing {needle}: {}",
-            &body[..body.len().min(800)]
+            out.stdout.is_empty(),
+            "parse errors must not leak onto stdout"
         );
+        let error: serde_json::Value = serde_json::from_slice(&out.stderr).unwrap();
+        assert_eq!(error["status"], "error");
+        assert_eq!(error["error"]["code"], "invalid_input");
     }
+    assert!(mock.received_requests().await.unwrap().is_empty());
 }
 
 #[tokio::test(flavor = "multi_thread")]

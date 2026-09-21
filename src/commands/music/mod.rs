@@ -26,6 +26,9 @@ use crate::config;
 use crate::error::AppError;
 use crate::output::Ctx;
 
+/// Current music model. Legacy section-based plans retain music_v1 unless overridden.
+pub(crate) const DEFAULT_MODEL: &str = "music_v2_5";
+
 pub async fn dispatch(ctx: Ctx, action: MusicAction) -> Result<(), AppError> {
     let cfg = config::load()?;
     let client = ElevenLabsClient::from_config(&cfg)?;
@@ -84,16 +87,36 @@ pub(crate) async fn build_compose_body(
         let content = tokio::fs::read_to_string(plan_path)
             .await
             .map_err(AppError::Io)?;
-        let plan: serde_json::Value =
+        let mut plan: serde_json::Value =
             serde_json::from_str(&content).map_err(|e| AppError::InvalidInput {
                 msg: format!("--composition-plan is not valid JSON: {e}"),
                 suggestion: None,
             })?;
+        // `music plan > plan.json` writes the normal CLI success envelope.
+        if plan.get("status").and_then(|v| v.as_str()) == Some("success")
+            && plan.get("data").is_some_and(|v| v.is_object())
+        {
+            plan = plan["data"].take();
+        }
+        let legacy = plan.get("sections").is_some();
+        let chunked = plan.get("chunks").is_some();
+        let effective_model = model.unwrap_or(if legacy { "music_v1" } else { DEFAULT_MODEL });
+        if (legacy && matches!(effective_model, "music_v2" | "music_v2_5"))
+            || (chunked && effective_model == "music_v1")
+        {
+            let compatible_model = if legacy { "music_v1" } else { DEFAULT_MODEL };
+            return Err(AppError::InvalidInput {
+                msg: format!("composition plan format is incompatible with {effective_model}"),
+                suggestion: Some(format!(
+                    "Generate with: elevenlabs music compose --composition-plan <file> --model {compatible_model}"
+                )),
+            });
+        }
+        body.insert("model_id".into(), serde_json::json!(effective_model));
         body.insert("composition_plan".into(), plan);
     }
-    if let Some(m) = model {
-        body.insert("model_id".into(), serde_json::Value::String(m.to_string()));
-    }
+    body.entry("model_id")
+        .or_insert_with(|| serde_json::json!(model.unwrap_or(DEFAULT_MODEL)));
     if force_instrumental {
         body.insert("force_instrumental".into(), serde_json::Value::Bool(true));
     }

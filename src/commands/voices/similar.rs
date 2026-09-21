@@ -5,11 +5,6 @@
 //!   - similarity_threshold (optional, 0..2)
 //!   - top_k (optional, 1..100)
 //!
-//! The SDK canonical fields are audio_file/similarity_threshold/top_k. The
-//! worker prompt asks us to also expose the library-style filters
-//! (gender/age/accent/language/use-case) as form fields — we pass them
-//! through; the server accepts or ignores depending on rollout state.
-
 use std::path::Path;
 
 use crate::client::ElevenLabsClient;
@@ -20,11 +15,6 @@ pub struct SimilarArgs {
     pub audio_file: String,
     pub similarity_threshold: Option<f32>,
     pub top_k: Option<u32>,
-    pub gender: Option<String>,
-    pub age: Option<String>,
-    pub accent: Option<String>,
-    pub language: Option<String>,
-    pub use_case: Option<String>,
 }
 
 pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: SimilarArgs) -> Result<(), AppError> {
@@ -55,24 +45,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: SimilarArgs) -> Resu
     if let Some(k) = args.top_k {
         form = form.text("top_k", k.to_string());
     }
-    // Prompt-specified filters — sent as form fields so forward-compat with
-    // the server-side rollout.
-    if let Some(v) = args.gender {
-        form = form.text("gender", v);
-    }
-    if let Some(v) = args.age {
-        form = form.text("age", v);
-    }
-    if let Some(v) = args.accent {
-        form = form.text("accent", v);
-    }
-    if let Some(v) = args.language {
-        form = form.text("language", v);
-    }
-    if let Some(v) = args.use_case {
-        form = form.text("use_case", v);
-    }
-
     let resp: serde_json::Value = client
         .post_multipart_json("/v1/similar-voices", form)
         .await?;

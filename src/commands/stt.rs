@@ -2,7 +2,7 @@
 //!
 //! Grounded against the official ElevenLabs REST spec (mirrored by the
 //! Fern-generated `@elevenlabs/elevenlabs-js` v2.43 SDK):
-//!   - model_id: scribe_v2 (default) | scribe_v1
+//!   - model_id: scribe_v2 (default) | scribe_v2_medical | another batch model
 //!   - timestamps_granularity: none | word | character
 //!   - keyterms / entity_detection / entity_redaction: repeated form fields
 //!   - additional_formats: single JSON-stringified array form field
@@ -181,6 +181,12 @@ pub async fn run(ctx: Ctx, args: SttArgs) -> Result<(), AppError> {
 // ── Validation ─────────────────────────────────────────────────────────────
 
 fn validate_args(args: &SttArgs) -> Result<(), AppError> {
+    if args.model == "scribe_v1" {
+        return Err(AppError::InvalidInput {
+            msg: "scribe_v1 was retired; use scribe_v2 for batch transcription".into(),
+            suggestion: Some("Transcribe with: elevenlabs stt <file> --model scribe_v2".into()),
+        });
+    }
     let source_count = [
         args.file.is_some(),
         args.from_url.is_some(),
@@ -246,10 +252,12 @@ fn validate_args(args: &SttArgs) -> Result<(), AppError> {
             suggestion: None,
         });
     }
-    if args.no_verbatim && args.model != "scribe_v2" {
+    if args.no_verbatim && !matches!(args.model.as_str(), "scribe_v2" | "scribe_v2_medical") {
         return Err(AppError::InvalidInput {
-            msg: "--no-verbatim is only supported by scribe_v2".into(),
-            suggestion: None,
+            msg: "--no-verbatim requires scribe_v2 or scribe_v2_medical".into(),
+            suggestion: Some(
+                "Transcribe with: elevenlabs stt <file> --model scribe_v2 --no-verbatim".into(),
+            ),
         });
     }
     if args.keyterms.len() > 1000 {

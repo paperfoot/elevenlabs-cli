@@ -29,7 +29,6 @@ pub struct ListArgs {
     pub sort: String,
     pub direction: String,
     pub limit: u32,
-    pub show_legacy: bool,
     pub next_page_token: Option<String>,
     pub voice_type: Option<String>,
     pub category: Option<String>,
@@ -47,11 +46,6 @@ pub async fn run(ctx: Ctx, client: &ElevenLabsClient, args: ListArgs) -> Result<
     ];
     if let Some(s) = args.search {
         params.push(("search", s));
-    }
-    // `show_legacy` applies to /v1/voices, not /v2/voices — pass it through
-    // anyway so a caller that's migrated from v1 can keep the flag.
-    if args.show_legacy {
-        params.push(("show_legacy", "true".to_string()));
     }
     if let Some(t) = args.next_page_token {
         params.push(("next_page_token", t));

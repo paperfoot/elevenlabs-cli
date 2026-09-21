@@ -43,7 +43,7 @@ pub fn run() {
                 ]
             },
             "stt [file]": {
-                "description": "Transcribe audio (scribe_v2 by default). Supports local files, HTTPS URLs, \
+                "description": "Transcribe audio (scribe_v2 by default; scribe_v2_medical for clinical audio). Supports local files, HTTPS URLs, \
                  hosted videos (YouTube/TikTok), character-level timestamps, diarization, entity \
                  redaction, biasing keyterms, and SRT/TXT/DOCX/PDF/HTML export.",
                 "aliases": ["transcribe"],
@@ -53,7 +53,7 @@ pub fn run() {
                     "--save-words <path>",
                     "--from-url <url>",
                     "--source-url <url>",
-                    "--model <scribe_v2|scribe_v1>",
+                    "--model <id>",
                     "--language <iso>",
                     "--timestamps <none|word|character>",
                     "--diarize",
@@ -97,27 +97,27 @@ pub fn run() {
                     "--output <path>"
                 ]
             },
-            "voices list": "List voices in your library (v2). Supports --search, --sort, --direction, --limit, --show-legacy, --next-page-token, --voice-type, --category, --fine-tuning-state, --collection-id, --include-total-count, --voice-id (repeatable).",
+            "voices list": "List voices in your library (v2). Supports --search, --sort, --direction, --limit, --next-page-token, --voice-type, --category, --fine-tuning-state, --collection-id, --include-total-count, --voice-id (repeatable).",
             "voices show <voice_id>": "Get full details for a voice",
             "voices search <query>": "Search your voice library",
-            "voices library": "Search the public shared voice library (1-indexed pagination). Filters: --search, --page, --page-size, --category, --gender, --age, --accent, --language, --locale, --use-case, --featured, --min-notice-days, --include-custom-rates, --include-live-moderated, --reader-app-enabled, --owner-id, --sort.",
+            "voices library": "Search the public shared voice library (0-indexed pagination). Filters: --search, --page, --page-size, --category, --gender, --age, --accent, --language, --locale, --use-case, --featured, --min-notice-days, --include-custom-rates, --include-live-moderated, --reader-app-enabled, --owner-id, --sort.",
             "voices clone <name> <files...>": "Instant voice clone (IVC) from samples",
             "voices design <description>": "Generate voice previews from a text description. Supports --model {eleven_multilingual_ttv_v2|eleven_ttv_v3}, --seed, --loudness, --guidance-scale, --enhance, --stream-previews, --quality, --text, --output-dir.",
             "voices save-preview <generated_voice_id> <name> <description>": "Save a designed voice to your library",
             "voices delete <voice_id> --yes": "Delete a voice (aliases: rm). --yes is required because deletion is irreversible.",
             "voices add-shared <public_user_id> <voice_id> --name <new_name>": "Add a shared voice from the public library into your collection. Optional --bookmarked.",
-            "voices similar <audio_file>": "Find shared voices similar to an audio sample. Filters: --similarity-threshold, --top-k, --gender, --age, --accent, --language, --use-case.",
+            "voices similar <audio_file>": "Find shared voices similar to an audio sample. Options: --similarity-threshold, --top-k. Use voices library for demographic filters.",
             "voices edit <voice_id>": "Edit a voice — rename, re-describe, update labels, add/remove samples. Flags: --name, --description, --labels <k=v> (repeatable), --add-sample <file> (repeatable), --remove-sample <sample_id> (repeatable), --remove-background-noise.",
             "dialogue [triples... | path.json | -]": "Generate multi-speaker dialogue (eleven_v3). Accepts JSON file, colon-delimited `label:voice_id:text` positional triples, or `-` for stdin JSON. --stream/--with-timestamps route to the four variant endpoints. (aliases: dlg)",
             "align <audio> <transcript|path>": "Forced alignment: align a known transcript to an audio recording. Returns per-word and per-character start/end timings plus a loss score. Prefer --transcript-file for multi-line text.",
             "models list": "List available models",
             "audio isolate <file>": "Isolate speech from background. Supports --pcm-16k for raw 16-bit PCM input.",
             "audio convert <file>": "Voice-to-voice conversion (speech-to-speech). Supports --format, --voice/--voice-id, --model, --stability/--similarity/--style/--speaker-boost/--speed (voice settings), --seed, --remove-background-noise, --optimize-streaming-latency, --pcm-16k, --no-logging.",
-            "music compose [prompt]": "Compose music from a text prompt. Length 3000-600000ms. Supports --composition-plan <file>, --force-instrumental, --seed, --model, --respect-sections-durations, --store-for-inpainting, --sign-with-c2pa.",
-            "music plan <prompt>": "Create a composition plan (free, returns JSON with sections)",
-            "music detailed [prompt]": "Generate music plus rich metadata (bpm, time_signature, sections). Same flags as compose plus --save-metadata. Audio and metadata land in separate files.",
-            "music stream [prompt]": "Stream compose: writes audio to disk chunk-by-chunk as the response arrives.",
-            "music upload <file>": "Upload an audio file so it can be referenced by song_id for inpainting. Flags: --name, --composition-plan.",
+            "music compose [prompt]": "Compose music from a text prompt (music_v2_5 by default; legacy section plans use music_v1). Length 3000-600000ms. Supports --composition-plan <file>, --force-instrumental, --seed, --model, --respect-sections-durations, --store-for-inpainting, --sign-with-c2pa.",
+            "music plan <prompt>": "Create a composition plan (free, music_v2_5 by default; returns chunks for v2/v2.5 or sections for v1)",
+            "music detailed [prompt]": "Generate music plus rich metadata (music_v2_5 by default; legacy section plans use music_v1). Same flags as compose plus --save-metadata. Audio and metadata land in separate files.",
+            "music stream [prompt]": "Stream compose (music_v2_5 by default; legacy section plans use music_v1): writes audio to disk chunk-by-chunk as the response arrives.",
+            "music upload <file>": "Upload an audio file so it can be referenced by song_id for inpainting. Flags: --extract-composition-plan, --model <id> (requires extraction; default music_v2_5).",
             "music stem-separation <song_id_or_file>": "Split a track into stems (aliases: stems). Flags: --output-dir, --stems <vocals|drums|bass|other> (repeatable).",
             "music video-to-music <video_file>": "Generate a score from video content (aliases: v2m). Flags: --description, --tag (repeatable), --model, --format, --output.",
             "dubbing create": "Create a dubbing job from --file or --source-url. Required: --target-lang. Optional: --source-lang, --num-speakers, --watermark, --start-time, --end-time, --highest-resolution, --drop-background-audio, --use-profanity-filter, --dubbing-studio, --disable-voice-cloning, --mode {automatic|manual}. (aliases: new)",
@@ -153,7 +153,7 @@ pub fn run() {
                 "description": "Create a conversational AI agent. See `known_values.agent_tts_model_ids` and `gotchas.agents` before passing --model-id / --llm / --expressive-mode.",
                 "aliases": ["new"],
                 "defaults": {
-                    "--llm": "gemini-3.1-flash-lite-preview",
+                    "--llm": "gemini-3.1-flash-lite",
                     "--model-id": "eleven_flash_v2_5",
                     "--temperature": 0.5,
                     "--language": "en",
@@ -186,7 +186,7 @@ pub fn run() {
                     "conversation_config.tts.stability": "0.0-1.0",
                     "conversation_config.tts.similarity_boost": "0.0-1.0",
                     "conversation_config.conversation.max_duration_seconds": "hard call limit in seconds (spec default 600)",
-                    "conversation_config.turn.turn_model": "turn_v2 | turn_v3 (EMPIRICAL — enforced by the live API but absent from the current OpenAPI spec; treat as unofficial)",
+                    "conversation_config.turn.turn_model": "turn_v2 | turn_v3 (schema-backed; CLI retains the empirically verified turn_v2 default)",
                     "conversation_config.turn.turn_timeout": "silence seconds before the agent prompts (default 7, range 1-30)",
                     "conversation_config.turn.turn_eagerness": "patient | normal | eager (default normal)",
                     "conversation_config.turn.mode": "silence | turn (default turn)",
@@ -291,7 +291,7 @@ pub fn run() {
         "gotchas": {
             "agents": GOTCHAS,
             "turn_taking": [
-                "turn_model lives at conversation_config.turn.turn_model. Valid values: 'turn_v2', 'turn_v3'. EMPIRICAL — the live API enforces these two values but the current OpenAPI spec doesn't reference the field; treat as unofficial. This CLI's `agents create` scaffolds turn_v2 because in real-world dialing (2026-04) turn_v3 was observed swallowing short turn-ends on some LLM configs — the agent heard the user but never took its turn.",
+                "turn_model lives at conversation_config.turn.turn_model. Valid values: 'turn_v2', 'turn_v3'. Both are documented in the current OpenAPI schema. This CLI's `agents create` scaffolds turn_v2 because in real-world dialing (2026-04) turn_v3 was observed swallowing short turn-ends on some LLM configs — the agent heard the user but never took its turn.",
                 "turn_eagerness: 'patient' | 'normal' | 'eager' (API default 'normal'). 'patient' empirically over-suppresses on speakerphone — the agent stops taking turns. 'normal' is the safe default.",
                 "turn_timeout: seconds, range 1-30. Server default behaves like ~7s. Don't set above 15s without a test dial; users hang up thinking the line died.",
                 "disable_first_message_interruptions lives on conversation_config.AGENT.disable_first_message_interruptions (spec schema AgentConfigAPIModel), NOT conversation_config.turn.*. Pre-v0.3.0 of this CLI wrote it under turn; the server silently dropped it. If you upgraded from 0.2.1/0.2.2 and rely on the greeting-not-interrupted behaviour, `agents update --patch` with the correct agent.* path or recreate the agent with v0.3.0+.",

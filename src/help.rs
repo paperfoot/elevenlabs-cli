@@ -50,7 +50,7 @@ EXAMPLES
 
 pub const STT_HELP: &str = "TIPS
  - scribe_v2 (default) is slower but noticeably more accurate on noisy or
-   overlapping speech. Use --model scribe_v1 only for legacy parity.
+   overlapping speech. Use --model scribe_v2_medical for clinical audio.
  - --from-url ingests S3/GCS/R2/CDN/pre-signed HTTPS URLs without a local
    download; --source-url ingests hosted video (YouTube, TikTok, …).
    These and <FILE> are mutually exclusive.
@@ -214,17 +214,18 @@ EXAMPLES
 // ── Music ──────────────────────────────────────────────────────────────────
 
 pub const MUSIC_COMPOSE_HELP: &str = "TIPS
+ - Music uses music_v2_5 by default. Legacy section plans use music_v1.
  - --length-ms is milliseconds, not seconds. 3000-600000 (3s-10min).
  - Compose workflow has two shapes:
    (1) One-shot: pass a PROMPT (and optionally --length-ms, --force-
        instrumental); the model invents a composition plan internally.
    (2) Plan-first: run `elevenlabs music plan \"...\" > plan.json`,
-       edit the plan (sections, styles, lengths), then
+       edit the plan (chunks, styles, lengths), then
        `elevenlabs music compose --composition-plan plan.json`. Plan
        generation is free; composition is billed.
  - --composition-plan is mutually exclusive with PROMPT, --length-ms,
-   and --force-instrumental. Override per-section durations from the
-   plan with --respect-sections-durations.
+   and --force-instrumental. Chunk durations are enforced for v2/v2.5;
+   use --respect-sections-durations to enforce durations on v1 plans.
  - --sign-with-c2pa embeds provenance metadata in the mp3 — enable for
    anything that will ship publicly.
 
@@ -248,10 +249,8 @@ EXAMPLES
 pub const AGENTS_CREATE_HELP: &str = "TIPS
  - --system-prompt is REQUIRED — there is no interactive fallback. Keep
    prompts specific; vague prompts yield vague agents.
- - Defaults: --llm gemini-3.1-flash-lite-preview (newest Gemini flash
-   preview the ElevenLabs backend accepts — the OpenAPI spec nominally
-   defaults to the older gemini-2.5-flash but 3.1 is current and lower
-   latency in practice), --model-id eleven_flash_v2_5 (lowest TTS
+ - Defaults: --llm gemini-3.1-flash-lite (the stable replacement for
+   the deprecated preview), --model-id eleven_flash_v2_5 (lowest TTS
    latency, current agent recommendation), --max-duration-seconds 600
    (10 min, matching the spec default). Override --llm for reasoning-
    heavy use cases; override --model-id for higher-fidelity voice;
@@ -301,7 +300,7 @@ EXAMPLES
  $ elevenlabs agents create \"Research Assistant\" \\
      --system-prompt \"$(cat prompts/ra.txt)\" \\
      --voice-id 21m00Tcm4TlvDq8ikWAM \\
-     --llm gemini-3.1-flash-lite-preview --model-id eleven_multilingual_v2
+     --llm gemini-3.1-flash-lite --model-id eleven_multilingual_v2
 
  # Attach docs after create
  $ AGENT=$(elevenlabs agents create ... --json | jq -r '.data.agent_id')
@@ -331,8 +330,7 @@ pub const AGENTS_UPDATE_HELP: &str = "TIPS
    eleven_v3_conversational in the same patch (or the agent already has
    that value). The CLI pre-scans for this footgun and errors out
    before sending the patch.
- - turn.turn_model values: 'turn_v2' | 'turn_v3'. EMPIRICAL — enforced
-   by the live API, absent from the current OpenAPI spec. Our scaffold
+ - turn.turn_model values: 'turn_v2' | 'turn_v3' (schema-backed). Our scaffold
    uses turn_v2 (empirically stable in 2026-04); v3 was observed
    swallowing turn-ends on some LLM configs.
  - turn.turn_eagerness: 'patient' | 'normal' | 'eager' (default
@@ -367,7 +365,7 @@ EXAMPLES
  $ elevenlabs agents update agent_abc --patch p.json
 
  # Change just the LLM
- $ echo '{\"conversation_config\":{\"agent\":{\"prompt\":{\"llm\":\"gemini-3.1-flash-lite-preview\"}}}}' > p.json
+ $ echo '{\"conversation_config\":{\"agent\":{\"prompt\":{\"llm\":\"gemini-3.1-flash-lite\"}}}}' > p.json
  $ elevenlabs agents update agent_abc --patch p.json
 
  # Rename the agent (top-level, not inside conversation_config)
