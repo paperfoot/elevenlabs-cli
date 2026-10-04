@@ -42,9 +42,8 @@ they are not an exhaustive vocabulary. [Audio tags](https://elevenlabs.io/docs/o
 | Sound events | `[applause]`, `[clapping]` |
 | Experimental performance | `[sings]`, `[strong French accent]` |
 
-A descriptive direction such as `[gentle voice, holding back a laugh]` is an
-original suggestion to audition. Specify a vocal quality when you want voice
-acting: an ambiguous effect cue may produce a sound instead. Delivery already
+Try a descriptive direction such as `[gentle voice, holding back a laugh]`.
+Specify a vocal quality when you want voice acting: an ambiguous effect cue may produce a sound instead. Delivery already
 present in the voice's training material tends to be easier to elicit.
 
 As a working method, start untagged, then add one direction at the point that
@@ -67,9 +66,8 @@ helps comparisons but does not guarantee identical audio.
 
 ## CLI examples
 
-These scripts are original examples. They use the saved voice; add
-`--voice-id VOICE_ID` to choose a specific one. They are starting points for
-listening tests, not claims of a particular performance from every voice.
+These examples use the saved voice. Add `--voice-id VOICE_ID` to choose a
+specific one.
 
 ### Plain narration
 
