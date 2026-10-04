@@ -25,7 +25,7 @@ pub fn run(command: Option<&str>) -> Result<(), AppError> {
                 "options": ["--path <name=value> (repeatable)", "--query <name=value> (repeatable for arrays)", "--header <name=value>", "--body <json|@file>", "--field <name=value> (repeatable)", "--file <field=path> (repeatable)", "--output <new-file>", "--dry-run", "--confirm"]
             },
             "tts <text>": {
-                "description": "Convert text to speech. Writes an audio file. Supports streaming \
+                "description": "Convert text to speech. eleven_v4 uses Text to Dialogue (max 2000 characters, stability/similarity only; no speed/style/speaker boost). eleven_v4_turbo requires WebSockets. Writes an audio file. Supports streaming \
                  (--stream routes to /stream endpoint) and per-character alignment JSON \
                  (--with-timestamps routes to /with-timestamps endpoint).",
                 "aliases": ["speak"],
@@ -122,7 +122,7 @@ pub fn run(command: Option<&str>) -> Result<(), AppError> {
             "voices add-shared <public_user_id> <voice_id> --name <new_name>": "Add a shared voice from the public library into your collection. Optional --bookmarked.",
             "voices similar <audio_file>": "Find shared voices similar to an audio sample. Options: --similarity-threshold, --top-k. Use voices library for demographic filters.",
             "voices edit <voice_id>": "Edit a voice — rename, re-describe, update labels, add/remove samples. Flags: --name, --description, --labels <k=v> (repeatable), --add-sample <file> (repeatable), --remove-sample <sample_id> (repeatable), --remove-background-noise.",
-            "dialogue [triples... | path.json | -]": "Generate multi-speaker dialogue (eleven_v3). Accepts JSON file, colon-delimited `label:voice_id:text` positional triples, or `-` for stdin JSON. --stream/--with-timestamps route to the four variant endpoints. (aliases: dlg)",
+            "dialogue [triples... | path.json | -]": "Generate multi-speaker dialogue (default eleven_v3; --model eleven_v4 for the latest HTTP model). --stability/--similarity control settings. --previous-text/--next-text accept up to 100 characters; --previous-request-id/--next-request-id up to 3 each. --use-pvc-as-ivc selects the IVC version of a professional clone. Style, speaker boost and latency optimization are unsupported. Accepts JSON file, colon-delimited `label:voice_id:text` positional triples, or `-` for stdin JSON. --stream/--with-timestamps route to the four variant endpoints. (aliases: dlg)",
             "align <audio> <transcript|path>": "Forced alignment: align a known transcript to an audio recording. Returns per-word and per-character start/end timings plus a loss score. Prefer --transcript-file for multi-line text.",
             "models list": "List available models",
             "audio isolate <file>": "Isolate speech from background. Supports --pcm-16k for raw 16-bit PCM input.",

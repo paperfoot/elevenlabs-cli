@@ -165,7 +165,7 @@ fn collect_schema_refs(value: &Value, refs: &mut BTreeSet<String>) {
 fn api_list_group_summary_is_offline_and_complete() {
     let output = offline(&["api", "list"]);
     let data = data(&output);
-    assert_eq!(data["total_operations"], 391);
+    assert_eq!(data["total_operations"], 406);
     let groups = data["groups"].as_array().expect("groups must be an array");
     assert!(!groups.is_empty());
     assert!(groups.iter().all(|group| {
@@ -178,11 +178,11 @@ fn api_list_group_summary_is_offline_and_complete() {
 #[test]
 fn api_list_all_matches_every_vendored_operation() {
     let expected = vendored_operations();
-    assert_eq!(expected.len(), 391, "vendored operation count changed");
+    assert_eq!(expected.len(), 406, "vendored operation count changed");
 
     let output = offline(&["api", "list", "--all"]);
     let data = data(&output);
-    assert_eq!(data["total_operations"], 391);
+    assert_eq!(data["total_operations"], 406);
     let listed = data["operations"]
         .as_array()
         .expect("--all must return operations");
@@ -265,9 +265,24 @@ fn api_schema_accepts_alias_and_operation_id_and_closes_refs() {
             "scoped schema omitted referenced component {reference}"
         );
     }
-    assert!(
-        components.len() < 100,
-        "scoped schema unexpectedly contains the full component catalog"
+    let mut roots = schema.clone();
+    roots.as_object_mut().unwrap().remove("components");
+    let mut reachable = BTreeSet::new();
+    collect_schema_refs(&roots, &mut reachable);
+    let mut pending: Vec<_> = reachable.iter().cloned().collect();
+    while let Some(name) = pending.pop() {
+        let mut children = BTreeSet::new();
+        collect_schema_refs(&components[&name], &mut children);
+        for child in children {
+            if reachable.insert(child.clone()) {
+                pending.push(child);
+            }
+        }
+    }
+    assert_eq!(
+        components.keys().cloned().collect::<BTreeSet<_>>(),
+        reachable,
+        "scoped schema must include only components reachable from the operation"
     );
 }
 

@@ -17,16 +17,18 @@
 // ── TTS ────────────────────────────────────────────────────────────────────
 
 pub const TTS_HELP: &str = "TIPS
+ - --model eleven_v4 uses Text to Dialogue, including streamed timestamps.
+   Requests accept up to 2,000 characters and 100 characters of context.
+   V4 supports stability and similarity; style and speed are unsupported.
  - Default output is ./tts_<timestamp>.mp3 — pass --output path.mp3 if you
    want a stable name; pass --stdout to pipe audio bytes (implies --quiet).
  - Prefer --voice NAME over --voice-id; a miss errors out (exit 3) instead
    of silently picking the first voice in your library.
  - --format uses codec_samplerate_bitrate, e.g. mp3_44100_128, pcm_44100,
    ulaw_8000. The bitrate segment is only valid for mp3.
- - --stream begins writing audio as it arrives (lowest time-to-first-byte).
-   --with-timestamps returns per-character alignment and is mutually
-   useful with streaming for live karaoke; --save-timestamps <path.json>
-   captures the alignment JSON.
+ - V4 --stream writes audio as it arrives; older models buffer it.
+   --with-timestamps saves per-character alignment. Combining both flags
+   requires V4 and writes alignment as JSONL.
  - Splitting long text? Pass --previous-text / --next-text (or the
    request-id variants) to preserve prosody across boundaries.
 
@@ -164,8 +166,11 @@ pub const DIALOGUE_HELP: &str = "TIPS
    (quote each triple to survive shell splitting); (2) --input <file.json>
    with an array of `{text, voice_id}` entries. A single positional ending
    in `.json` is auto-detected as a file; pass `-` to read JSON from stdin.
- - Model defaults to eleven_v3 — the only one that actually does
-   multi-speaker prosody well. Use --model only to opt *out*.
+ - Use --model eleven_v4 for the latest model; default remains eleven_v3.
+ - V4 supports stability and similarity; style, speed and speaker boost
+   are unsupported. V4 Turbo requires the realtime WebSocket API.
+ - --previous-text/--next-text accept up to 100 characters each;
+   --previous-request-id/--next-request-id accept up to 3 IDs each.
  - Up to 10 unique voice IDs per request; total text under ~2000 chars.
    The CLI pre-flights this before burning the API quota.
  - --stream + --with-timestamps combined routes to the NDJSON variant
@@ -250,13 +255,13 @@ pub const AGENTS_CREATE_HELP: &str = "TIPS
  - --system-prompt is REQUIRED — there is no interactive fallback. Keep
    prompts specific; vague prompts yield vague agents.
  - Defaults: --llm gemini-3.1-flash-lite (the stable replacement for
-   the deprecated preview), --model-id eleven_flash_v2_5 (lowest TTS
-   latency, current agent recommendation), --max-duration-seconds 600
+   the deprecated preview), --model-id eleven_flash_v2_5,
+   --max-duration-seconds 600
    (10 min, matching the spec default). Override --llm for reasoning-
    heavy use cases; override --model-id for higher-fidelity voice;
    bump --max-duration-seconds for long-form interviews.
  - Valid --model-id values (server-enforced allowlist):
-   eleven_flash_v2_5 (recommended), eleven_flash_v2, eleven_multilingual_v2,
+   eleven_v4, eleven_v4_turbo, eleven_flash_v2_5, eleven_flash_v2, eleven_multilingual_v2,
    eleven_v3_conversational, eleven_turbo_v2_5 (DEPRECATED —
    replaced by flash_v2_5), eleven_turbo_v2 (DEPRECATED — replaced by
    flash_v2). Passing `eleven_v3` is a common mistake — that's the
@@ -323,7 +328,7 @@ pub const AGENTS_UPDATE_HELP: &str = "TIPS
      turn.turn_timeout               — silence before the agent prompts (s)
  - tts.model_id allowlist (server-enforced): eleven_turbo_v2,
    eleven_turbo_v2_5, eleven_flash_v2, eleven_flash_v2_5,
-   eleven_multilingual_v2, eleven_v3_conversational. `eleven_v3` is
+   eleven_multilingual_v2, eleven_v3_conversational, eleven_v4, eleven_v4_turbo. `eleven_v3` is
    the dialogue/ttv model and is NOT valid for agents — the CLI
    rejects it pre-flight (exit 3).
  - tts.expressive_mode=true is SILENTLY DROPPED unless tts.model_id is

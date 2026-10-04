@@ -30,9 +30,10 @@ diff <(awk '{print $1, $2}' docs/reference/endpoints-inventory.txt | sort -u) \
 
 ## Current snapshot
 
-Refreshed 2026-09-21: 302 paths and 391 operations. Existing paths from the
-April snapshot remain present. Current model and request changes are documented
-in [the September compatibility audit](api-compatibility-2026-09-21.md).
+Refreshed 2026-10-04: 313 paths and 406 operations. Includes the September 28
+v4 model, dialogue settings/continuity, transcript editing and Flows template
+schemas. The [September compatibility audit](api-compatibility-2026-09-21.md)
+records the earlier curated-command checks.
 
 ## Historical audits
 

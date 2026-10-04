@@ -3,6 +3,18 @@
 All notable changes to `elevenlabs-cli` are listed here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org).
 
+## [0.4.1] — 2026-10-04
+
+- Route `tts --model eleven_v4` through Text to Dialogue, including streaming
+  and timestamps, while preserving the TTS output fields and older model routes.
+- Correct dialogue similarity settings and add continuity context, request IDs
+  and `--use-pvc-as-ivc`. Reject unsupported options before generation.
+- Accept `eleven_v4` and `eleven_v4_turbo` in agent configurations. Direct
+  v4 Turbo generation requires WebSockets; HTTP commands return a concrete
+  `eleven_v4` alternative.
+- Refresh the bundled official API schema to 406 operations, including transcript
+  editing and Flows templates. Preserve existing model defaults.
+
 ## [0.4.0] — 2026-09-21
 
 ### Added
