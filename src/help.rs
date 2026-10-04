@@ -17,6 +17,9 @@
 // ── TTS ────────────────────────────────────────────────────────────────────
 
 pub const TTS_HELP: &str = "TIPS
+ - Put delivery tags in the script: [curious], [whispers], [sighs].
+   V4 uses punctuation and text structure for pacing, not SSML breaks.
+   `elevenlabs skill install` includes the full v4 prompting guide.
  - --model eleven_v4 uses Text to Dialogue, including streamed timestamps.
    Requests accept up to 2,000 characters and 100 characters of context.
    V4 supports stability and similarity; style and speed are unsupported.
@@ -162,6 +165,8 @@ EXAMPLES
 // ── Dialogue ───────────────────────────────────────────────────────────────
 
 pub const DIALOGUE_HELP: &str = "TIPS
+ - Put tags inside each turn's text; assign speakers with voice IDs.
+   Generate connected turns together and audition delivery and pronunciation.
  - Two input modes: (1) positional colon-triples `label:voice_id:text`
    (quote each triple to survive shell splitting); (2) --input <file.json>
    with an array of `{text, voice_id}` entries. A single positional ending

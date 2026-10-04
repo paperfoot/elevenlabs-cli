@@ -3,6 +3,14 @@
 All notable changes to `elevenlabs-cli` are listed here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is [SemVer](https://semver.org).
 
+## [0.4.2] — 2026-10-04
+
+- Bundle a sourced Eleven v4 prompting guide with delivery tags, original CLI
+  examples, pronunciation, dialogue, script preparation and listening checks.
+- Install the guide alongside the Claude, Codex and Gemini skills. Skill status
+  detects a missing or stale guide, and reinstalling repairs it.
+- Add tag and pacing guidance to TTS and dialogue help.
+
 ## [0.4.1] — 2026-10-04
 
 - Route `tts --model eleven_v4` through Text to Dialogue, including streaming
