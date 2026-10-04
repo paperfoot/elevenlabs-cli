@@ -53,6 +53,10 @@ This is the **Paperfoot community CLI**. ElevenLabs also ships an [official CLI]
 
 ## Eleven v4
 
+[Prompting guide](docs/eleven-v4-prompting.md): delivery tags, original examples,
+pronunciation, dialogue, script preparation and listening checks.
+`elevenlabs skill install` installs the guide for Claude, Codex and Gemini.
+
 ```bash
 elevenlabs tts "Hello, world." --model eleven_v4 -o speech.mp3
 elevenlabs dialogue script.json --model eleven_v4 --similarity 0.75 -o scene.mp3

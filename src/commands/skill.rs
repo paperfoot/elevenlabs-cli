@@ -7,6 +7,9 @@ use std::path::PathBuf;
 use crate::error::AppError;
 use crate::output::{self, Ctx};
 
+const PROMPTING_GUIDE: &str = include_str!("../../docs/eleven-v4-prompting.md");
+const PROMPTING_PATH: &str = "references/eleven-v4-prompting.md";
+
 fn skill_content() -> String {
     r#"---
 name: elevenlabs
@@ -32,6 +35,11 @@ Eleven v4 uses Text to Dialogue, including single-speaker `tts`. Requests
 accept up to 2,000 characters; use stability and similarity settings. Style,
 speed and speaker boost are unsupported. V4 Turbo is for agent configurations
 and realtime WebSockets, which the HTTP CLI does not stream.
+
+For speech scripts, tags, pronunciation, voice direction and dialogue, read
+[Prompting Eleven v4](references/eleven-v4-prompting.md). It includes CLI
+examples and a script-preparation prompt. Keep editing instructions out of
+the spoken text; audition the result before accepting delivery or pronunciation.
 
 `agent-info` returns raw JSON. Other commands return compact JSON envelopes
 when piped or with `--json`: `{version,status,data|error}`. Errors go to stderr.
@@ -90,7 +98,10 @@ pub fn install(ctx: Ctx) -> Result<(), AppError> {
     for target in &skill_targets() {
         let skill_path = target.path.join("SKILL.md");
 
-        if skill_path.exists() && std::fs::read_to_string(&skill_path).is_ok_and(|c| c == content) {
+        let guide_path = target.path.join(PROMPTING_PATH);
+        if std::fs::read_to_string(&skill_path).is_ok_and(|c| c == content)
+            && std::fs::read_to_string(&guide_path).is_ok_and(|c| c == PROMPTING_GUIDE)
+        {
             results.push(InstallResult {
                 platform: target.name.into(),
                 path: skill_path.display().to_string(),
@@ -99,7 +110,8 @@ pub fn install(ctx: Ctx) -> Result<(), AppError> {
             continue;
         }
 
-        std::fs::create_dir_all(&target.path)?;
+        std::fs::create_dir_all(target.path.join("references"))?;
+        std::fs::write(&guide_path, PROMPTING_GUIDE)?;
         std::fs::write(&skill_path, &content)?;
         results.push(InstallResult {
             platform: target.name.into(),
@@ -142,7 +154,9 @@ pub fn status(ctx: Ctx) -> Result<(), AppError> {
     for target in &skill_targets() {
         let skill_path = target.path.join("SKILL.md");
         let (installed, current) = if skill_path.exists() {
-            let current = std::fs::read_to_string(&skill_path).is_ok_and(|c| c == content);
+            let current = std::fs::read_to_string(&skill_path).is_ok_and(|c| c == content)
+                && std::fs::read_to_string(target.path.join(PROMPTING_PATH))
+                    .is_ok_and(|c| c == PROMPTING_GUIDE);
             (true, current)
         } else {
             (false, false)
