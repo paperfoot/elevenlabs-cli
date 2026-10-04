@@ -45,11 +45,25 @@ elevenlabs phone call agent_xxx --from-id phnum_yyy --to +14155551234
 
 Commands auto-switch between **coloured human output** (terminal) and **JSON envelopes** (piped / `--json`). `agent-info` uses raw JSON; `api` discovery follows the normal envelope contract. Explicitly passing `--stdout` to TTS or dialogue writes audio bytes instead. Exit codes are semantic (`0=ok, 1=transient, 2=config, 3=bad input, 4=rate limited`). Errors carry a machine-readable `code` and a `suggestion` for recovery.
 
-**Checked against a dated OpenAPI snapshot** — [`docs/reference/openapi.elevenlabs.json`](docs/reference/openapi.elevenlabs.json) is refreshable via [`./docs/reference/refresh.sh`](docs/reference/refresh.sh). The [compatibility audit](docs/reference/api-compatibility-2026-09-21.md) records verified changes and remaining scope. The curated commands use 94 HTTP operations; the schema-backed `api` command makes all 391 operations in the 2026-09-21 snapshot addressable. That is snapshot coverage, not a claim that every endpoint and parameter combination was tested against a live account.
+**Checked against a dated OpenAPI snapshot** — [`docs/reference/openapi.elevenlabs.json`](docs/reference/openapi.elevenlabs.json) is refreshable via [`./docs/reference/refresh.sh`](docs/reference/refresh.sh). The [compatibility audit](docs/reference/api-compatibility-2026-09-21.md) records verified changes and remaining scope. The curated commands use 94 HTTP operations; the schema-backed `api` command makes all 406 operations in the 2026-10-04 snapshot addressable. That is snapshot coverage, not a claim that every endpoint and parameter combination was tested against a live account.
 
 This is the **Paperfoot community CLI**. ElevenLabs also ships an [official CLI](https://github.com/elevenlabs/cli) with broad API coverage and agents-as-code workflows. Both use the executable name `elevenlabs`; use an explicit binary path when comparing them. See the [measured comparison](docs/reference/cli-comparison-2026-09-21.md).
 
 ---
+
+## Eleven v4
+
+```bash
+elevenlabs tts "Hello, world." --model eleven_v4 -o speech.mp3
+elevenlabs dialogue script.json --model eleven_v4 --similarity 0.75 -o scene.mp3
+```
+
+V4 uses Text to Dialogue for single-speaker speech too. It supports stability
+and similarity, up to 2,000 characters per request, continuity context and
+streamed timestamps. Style, speed and speaker boost are unsupported. Saved
+model defaults remain in effect; use `elevenlabs config set model_id eleven_v4`
+to change yours. `eleven_v4_turbo` is available for agent configuration and
+realtime WebSockets; this CLI's speech generation uses HTTP.
 
 ## Install
 
@@ -176,7 +190,7 @@ and string lengths, and numeric bounds. ElevenLabs remains authoritative for
 formats, regex patterns, business rules, and cross-field constraints.
 
 The [2026-09-21 route inventory](docs/reference/curated-coverage-2026-09-21.json) found 94 HTTP operations behind the curated commands. The
-generic surface makes the remaining 297 operations in that 391-operation
+generic surface makes the remaining operations in that 406-operation
 snapshot accessible without adding hundreds of command wrappers. It does not
 cover WebSocket APIs, automatically paginate, or automatically retry. Although
 the repository uses a Python standard-library script to refresh and validate
@@ -476,7 +490,7 @@ The [official CLI v1](https://elevenlabs.io/blog/elevenlabs-cli-v1), released Au
 
 The old Python MCP server was [deprecated and archived in August 2026](https://elevenlabs.io/docs/changelog/2026/8/22). The current hosted service requires neither a local Python runtime nor an API key copied into the client. Its [product page](https://elevenlabs.io/mcp) describes agent management and creative generation, including images and video.
 
-Discovery and command results consume context with either CLI or MCP. Actual token use depends on the command, schema detail, client, and tokenizer. Our [reproducible comparison](docs/reference/cli-comparison-2026-09-21.md) measures v0.3.3 binary size, local discovery time, output bytes, and pipeline behavior; it does not claim universal token savings. Its pre-v0.4.0 API gap count is historical because v0.4.0 adds the schema-backed 391-operation surface described above; the other measured results and comparison limits remain dated v0.3.3 evidence.
+Discovery and command results consume context with either CLI or MCP. Actual token use depends on the command, schema detail, client, and tokenizer. Our [reproducible comparison](docs/reference/cli-comparison-2026-09-21.md) measures v0.3.3 binary size, local discovery time, output bytes, and pipeline behavior; it does not claim universal token savings. Its pre-v0.4.0 API gap count is historical because v0.4.0 adds the schema-backed HTTP surface described above; the other measured results and comparison limits remain dated v0.3.3 evidence.
 
 ---
 

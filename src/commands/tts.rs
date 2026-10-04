@@ -15,7 +15,7 @@ use base64::Engine as _;
 use serde::Serialize;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use crate::cli::TtsArgs;
+use crate::cli::{DialogueArgs, TtsArgs};
 use crate::client::ElevenLabsClient;
 use crate::config;
 use crate::error::AppError;
@@ -50,16 +50,6 @@ pub async fn run(ctx: Ctx, mut args: TtsArgs) -> Result<(), AppError> {
         });
     }
 
-    // Validation: combined stream+with-timestamps uses a separate NDJSON
-    // protocol that we don't support yet. Tell the user which to pick.
-    if args.stream && args.with_timestamps {
-        return Err(AppError::InvalidInput {
-            msg: "--stream + --with-timestamps together uses an NDJSON stream protocol \
-             not yet supported. Use one or the other in v0.1.4."
-                .into(),
-            suggestion: None,
-        });
-    }
     if args.previous_request_ids.len() > 3 {
         return Err(AppError::InvalidInput {
             msg: "--previous-request-id may be specified at most 3 times".into(),
@@ -74,6 +64,50 @@ pub async fn run(ctx: Ctx, mut args: TtsArgs) -> Result<(), AppError> {
     }
 
     let cfg = config::load()?;
+    let model_id = args.model.clone().unwrap_or_else(|| cfg.default_model_id());
+    let dialogue_args = if matches!(model_id.as_str(), "eleven_v4" | "eleven_v4_turbo") {
+        if args.speed.is_some() || args.apply_language_text_normalization {
+            return Err(AppError::bad_input_with(
+                "Eleven v4 does not support --speed or --apply-language-text-normalization",
+                "elevenlabs tts 'Hello.' --model eleven_v4 -o speech.mp3",
+            ));
+        }
+        let dialogue = DialogueArgs {
+            positional: vec![],
+            input: None,
+            output: args.output.clone(),
+            model: Some(model_id.clone()),
+            format: args.format.clone(),
+            stream: args.stream,
+            with_timestamps: args.with_timestamps,
+            save_timestamps: args.save_timestamps.clone(),
+            stdout: args.stdout,
+            seed: args.seed,
+            stability: args.stability,
+            similarity: args.similarity,
+            style: args.style,
+            speaker_boost: args.speaker_boost,
+            language: args.language.clone(),
+            apply_text_normalization: args.apply_text_normalization.clone(),
+            optimize_streaming_latency: args.optimize_streaming_latency,
+            no_logging: args.no_logging,
+            previous_text: args.previous_text.clone(),
+            next_text: args.next_text.clone(),
+            previous_request_ids: args.previous_request_ids.clone(),
+            next_request_ids: args.next_request_ids.clone(),
+            use_pvc_as_ivc: args.use_pvc_as_ivc,
+        };
+        crate::commands::dialogue::validate_options(&dialogue)?;
+        Some(dialogue)
+    } else {
+        if args.stream && args.with_timestamps {
+            return Err(AppError::bad_input_with(
+                "combined --stream and --with-timestamps is supported only with eleven_v4",
+                "elevenlabs tts 'Hello.' --model eleven_v4 --stream --with-timestamps -o speech.mp3",
+            ));
+        }
+        None
+    };
     let client = ElevenLabsClient::from_config(&cfg)?;
 
     let voice_id = if let Some(id) = &args.voice_id {
@@ -84,7 +118,38 @@ pub async fn run(ctx: Ctx, mut args: TtsArgs) -> Result<(), AppError> {
         cfg.default_voice_id()
     };
 
-    let model_id = args.model.clone().unwrap_or_else(|| cfg.default_model_id());
+    if let Some(mut dialogue_args) = dialogue_args {
+        if dialogue_args.output.is_none() && (!args.stdout || args.with_timestamps) {
+            let format = args
+                .format
+                .clone()
+                .unwrap_or_else(|| cfg.default_output_format());
+            dialogue_args.output = Some(
+                crate::commands::resolve_output_path(None, "tts", extension_for_format(&format))
+                    .display()
+                    .to_string(),
+            );
+        }
+        let inputs = vec![crate::commands::dialogue::DialogueInput {
+            text: args.text.clone(),
+            voice_id: voice_id.clone(),
+            label: None,
+        }];
+        if let Some(generated) = crate::commands::dialogue::generate(dialogue_args, inputs).await? {
+            let result = TtsResult {
+                voice_id,
+                model_id: generated.model_id,
+                endpoint: generated.endpoint,
+                characters: generated.characters,
+                output_format: generated.output_format,
+                output_path: generated.output_path,
+                alignment_path: generated.alignment_path,
+                bytes_written: generated.bytes_written,
+            };
+            output::print_success_or(ctx, &result, print_human)?;
+        }
+        return Ok(());
+    }
     let output_format = args
         .format
         .clone()

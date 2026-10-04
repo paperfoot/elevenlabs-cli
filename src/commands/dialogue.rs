@@ -1,35 +1,4 @@
-//! text-to-dialogue — multi-speaker generation with the `eleven_v3` flagship.
-//!
-//! Routes to one of four endpoints depending on flags:
-//!   - default:                          POST /v1/text-to-dialogue
-//!   - --stream:                         POST /v1/text-to-dialogue/stream
-//!   - --with-timestamps:                POST /v1/text-to-dialogue/with-timestamps
-//!   - --stream + --with-timestamps:     POST /v1/text-to-dialogue/stream/with-timestamps
-//!
-//! Request body shape (grounded against elevenlabs-python's
-//! `BodyTextToDialogue*`):
-//!
-//!   {
-//!     "inputs": [{ "text": "...", "voice_id": "..." }, ...],
-//!     "model_id": "eleven_v3",
-//!     "settings": { "stability": 0.5, "similarity_boost": 0.75, ... },
-//!     "seed": <u32>,
-//!     "apply_text_normalization": "auto"|"on"|"off",
-//!     "language_code": "en"
-//!   }
-//!
-//! Limits: up to 10 distinct voice IDs across all inputs, ~2000 total chars
-//! (enforced client-side as a pre-flight; the server also enforces).
-//!
-//! Input parsing accepts two shapes on the CLI:
-//!   1. `elevenlabs dialogue path/to/inputs.json` — JSON file
-//!   2. `elevenlabs dialogue "Alice:voice_id_1:Hello" "Bob:voice_id_2:Hi"` —
-//!      colon-delimited triples for small dialogues.
-//!
-//! The first positional is detected by extension / path existence — if the
-//! first argument parses as a valid JSON file, we load it; otherwise every
-//! positional is treated as a `label:voice_id:text` triple. The first
-//! positional may also be `-` to read JSON from stdin.
+//! Multi-speaker generation through the Text to Dialogue HTTP API.
 
 use base64::Engine as _;
 use serde::Serialize;
@@ -50,22 +19,31 @@ const MAX_UNIQUE_VOICES: usize = 10;
 const MAX_TOTAL_CHARS: usize = 2000;
 
 #[derive(Serialize)]
-struct DialogueResult {
-    endpoint: String,
-    model_id: String,
-    inputs: usize,
-    unique_voices: usize,
-    characters: usize,
-    output_format: String,
-    output_path: Option<String>,
-    alignment_path: Option<String>,
-    bytes_written: usize,
+pub(crate) struct DialogueResult {
+    pub endpoint: String,
+    pub model_id: String,
+    pub inputs: usize,
+    pub unique_voices: usize,
+    pub characters: usize,
+    pub output_format: String,
+    pub output_path: Option<String>,
+    pub alignment_path: Option<String>,
+    pub bytes_written: usize,
 }
 
 pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
-    // Parse the dialogue inputs before anything else so syntactic errors
-    // never burn an API quota.
     let inputs = parse_inputs(&args).await?;
+    if let Some(result) = generate(args, inputs).await? {
+        output::print_success_or(ctx, &result, print_human)?;
+    }
+    Ok(())
+}
+
+pub(crate) async fn generate(
+    args: DialogueArgs,
+    inputs: Vec<DialogueInput>,
+) -> Result<Option<DialogueResult>, AppError> {
+    validate_options(&args)?;
 
     if inputs.is_empty() {
         return Err(AppError::bad_input_with(
@@ -166,8 +144,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
                 alignment_path: Some(alignment_path),
                 bytes_written: audio.len(),
             };
-            output::print_success_or(ctx, &result, print_human)?;
-            Ok(())
+            Ok(Some(result))
         }
 
         (true, _) => {
@@ -211,7 +188,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
             .await?;
 
             if stream_to_stdout {
-                return Ok(());
+                return Ok(None);
             }
 
             let result = DialogueResult {
@@ -225,8 +202,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
                 alignment_path,
                 bytes_written,
             };
-            output::print_success_or(ctx, &result, print_human)?;
-            Ok(())
+            Ok(Some(result))
         }
 
         (false, false) => {
@@ -240,7 +216,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
                 let mut out = tokio::io::stdout();
                 out.write_all(&audio).await.map_err(AppError::Io)?;
                 out.flush().await.map_err(AppError::Io)?;
-                return Ok(());
+                return Ok(None);
             }
 
             let ext = crate::commands::tts::extension_for_format(&output_format);
@@ -261,8 +237,7 @@ pub async fn run(ctx: Ctx, args: DialogueArgs) -> Result<(), AppError> {
                 alignment_path: None,
                 bytes_written,
             };
-            output::print_success_or(ctx, &result, print_human)?;
-            Ok(())
+            Ok(Some(result))
         }
     }
 }
@@ -661,6 +636,53 @@ fn parse_triples(positionals: &[String]) -> Result<Vec<DialogueInput>, AppError>
 
 // ── Body / response helpers ────────────────────────────────────────────────
 
+pub(crate) fn validate_options(args: &DialogueArgs) -> Result<(), AppError> {
+    if args.model.as_deref() == Some("eleven_v4_turbo") {
+        return Err(AppError::bad_input_with(
+            "eleven_v4_turbo requires the realtime Text to Dialogue WebSocket API",
+            "Use HTTP generation: elevenlabs dialogue script.json --model eleven_v4 -o speech.mp3",
+        ));
+    }
+    if args.style.is_some()
+        || args.speaker_boost.is_some()
+        || args.optimize_streaming_latency.is_some()
+    {
+        return Err(AppError::bad_input_with(
+            "dialogue does not support --style, --speaker-boost or --optimize-streaming-latency",
+            "Use supported settings: elevenlabs dialogue script.json --model eleven_v4 --stability 0.5 --similarity 0.75 -o speech.mp3",
+        ));
+    }
+    for (flag, value) in [
+        ("--stability", args.stability),
+        ("--similarity", args.similarity),
+    ] {
+        if value.is_some_and(|v| !v.is_finite() || !(0.0..=1.0).contains(&v)) {
+            return Err(AppError::bad_input_with(
+                format!("{flag} must be between 0 and 1"),
+                format!("elevenlabs dialogue script.json {flag} 0.5 -o speech.mp3"),
+            ));
+        }
+    }
+    for (flag, text) in [
+        ("--previous-text", &args.previous_text),
+        ("--next-text", &args.next_text),
+    ] {
+        if text.as_ref().is_some_and(|v| v.chars().count() > 100) {
+            return Err(AppError::bad_input_with(
+                format!("{flag} accepts at most 100 characters for dialogue"),
+                format!("elevenlabs dialogue script.json {flag} 'Short context.' -o speech.mp3"),
+            ));
+        }
+    }
+    if args.previous_request_ids.len() > 3 || args.next_request_ids.len() > 3 {
+        return Err(AppError::bad_input_with(
+            "dialogue accepts at most 3 previous and 3 next request IDs",
+            "elevenlabs dialogue script.json --previous-request-id REQUEST_ID -o speech.mp3",
+        ));
+    }
+    Ok(())
+}
+
 fn build_body(args: &DialogueArgs, inputs: &[DialogueInput], model_id: &str) -> serde_json::Value {
     let inputs_json: Vec<serde_json::Value> = inputs
         .iter()
@@ -677,13 +699,7 @@ fn build_body(args: &DialogueArgs, inputs: &[DialogueInput], model_id: &str) -> 
         settings.insert("stability".into(), serde_json::json!(v));
     }
     if let Some(v) = args.similarity {
-        settings.insert("similarity_boost".into(), serde_json::json!(v));
-    }
-    if let Some(v) = args.style {
-        settings.insert("style".into(), serde_json::json!(v));
-    }
-    if let Some(v) = args.speaker_boost {
-        settings.insert("use_speaker_boost".into(), serde_json::json!(v));
+        settings.insert("similarity".into(), serde_json::json!(v));
     }
 
     let mut body = serde_json::Map::new();
@@ -709,6 +725,27 @@ fn build_body(args: &DialogueArgs, inputs: &[DialogueInput], model_id: &str) -> 
             "apply_text_normalization".into(),
             serde_json::Value::String(norm.clone()),
         );
+    }
+    if let Some(text) = &args.previous_text {
+        body.insert("previous_text".into(), serde_json::json!(text));
+    }
+    if let Some(text) = &args.next_text {
+        body.insert("future_text".into(), serde_json::json!(text));
+    }
+    if !args.previous_request_ids.is_empty() {
+        body.insert(
+            "previous_request_ids".into(),
+            serde_json::json!(args.previous_request_ids),
+        );
+    }
+    if !args.next_request_ids.is_empty() {
+        body.insert(
+            "next_request_ids".into(),
+            serde_json::json!(args.next_request_ids),
+        );
+    }
+    if args.use_pvc_as_ivc {
+        body.insert("use_pvc_as_ivc".into(), serde_json::json!(true));
     }
     serde_json::Value::Object(body)
 }

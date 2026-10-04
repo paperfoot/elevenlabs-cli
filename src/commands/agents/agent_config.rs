@@ -5,7 +5,7 @@
 //! client-side so the wrong inputs error out with an actionable suggestion
 //! before we ever hit the server. Two invariants in particular:
 //!
-//! 1. `conversation_config.tts.model_id` must be one of the six values in
+//! 1. `conversation_config.tts.model_id` must be one of the supported values in
 //!    [`AGENT_TTS_MODEL_IDS`]. The superficially similar `eleven_v3` is the
 //!    multi-speaker dialogue / text-to-voice model and is **not** accepted by
 //!    agents — the server returns "English Agents must use turbo or flash v2".
@@ -23,13 +23,10 @@
 
 use crate::error::AppError;
 
-/// Every `conversation_config.tts.model_id` the Agents backend currently
-/// accepts. Sourced from the 400 response body on invalid input and
-/// cross-checked against `TTSConversationalConfig-Input.model_id` in the
-/// vendored OpenAPI spec. `eleven_flash_v2_5` is the current agent
-/// recommendation; the `eleven_turbo_v2*` entries are still accepted but
-/// marked deprecated in the public models docs.
+/// Models accepted by the vendored `TTSConversationalModel` schema.
 pub const AGENT_TTS_MODEL_IDS: &[&str] = &[
+    "eleven_v4",
+    "eleven_v4_turbo",
     "eleven_flash_v2_5",
     "eleven_flash_v2",
     "eleven_multilingual_v2",
@@ -43,7 +40,7 @@ pub const EXPRESSIVE_MODEL_ID: &str = "eleven_v3_conversational";
 
 /// Human-readable pitfall strings, shared between `--help` and `agent-info`.
 pub const GOTCHAS: &[&str] = &[
-    "Agent TTS model_id allowlist: eleven_flash_v2_5 (recommended), eleven_flash_v2, \
+    "Agent TTS model_id allowlist: eleven_v4, eleven_v4_turbo, eleven_flash_v2_5, eleven_flash_v2, \
      eleven_multilingual_v2, eleven_v3_conversational. eleven_turbo_v2_5 and eleven_turbo_v2 \
      are still accepted but DEPRECATED per the public models docs — prefer the flash equivalents. \
      `eleven_v3` (no `_conversational`) is the dialogue/ttv model and agents reject it with \

@@ -25,8 +25,13 @@ elevenlabs api list --group workspace
 elevenlabs api schema history.list
 elevenlabs api call history.list --query page_size=2 --dry-run
 elevenlabs voices --help
-elevenlabs tts "Hello, world" -o hello.mp3
+elevenlabs tts "Hello, world" --model eleven_v4 -o hello.mp3
 ```
+
+Eleven v4 uses Text to Dialogue, including single-speaker `tts`. Requests
+accept up to 2,000 characters; use stability and similarity settings. Style,
+speed and speaker boost are unsupported. V4 Turbo is for agent configurations
+and realtime WebSockets, which the HTTP CLI does not stream.
 
 `agent-info` returns raw JSON. Other commands return compact JSON envelopes
 when piped or with `--json`: `{version,status,data|error}`. Errors go to stderr.

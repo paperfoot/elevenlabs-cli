@@ -46,7 +46,7 @@ pub enum Commands {
     #[command(visible_alias = "sound")]
     Sfx(SfxArgs),
 
-    /// Generate multi-speaker dialogue with `eleven_v3`
+    /// Generate multi-speaker dialogue with Eleven v3 or v4
     #[command(visible_alias = "dlg")]
     Dialogue(DialogueArgs),
 
@@ -238,7 +238,7 @@ pub struct TtsArgs {
     #[arg(long)]
     pub voice: Option<String>,
 
-    /// Model ID (eleven_v3, eleven_multilingual_v2, eleven_turbo_v2_5, eleven_flash_v2_5, ...)
+    /// Model ID. eleven_v4 routes through Text to Dialogue; older models use Text to Speech.
     #[arg(long)]
     pub model: Option<String>,
 
@@ -275,7 +275,7 @@ pub struct TtsArgs {
     pub stdout: bool,
 
     /// Route to the streaming endpoint (/v1/text-to-speech/{voice}/stream).
-    /// Audio is written as it arrives — useful for low-latency playback.
+    /// V4 writes audio as it arrives; older models buffer the response.
     #[arg(long)]
     pub stream: bool,
 
@@ -1227,7 +1227,7 @@ pub enum AgentsAction {
         #[arg(long, default_value = "0.5")]
         temperature: f32,
 
-        /// TTS model id. One of: eleven_turbo_v2, eleven_turbo_v2_5,
+        /// TTS model id. Supports eleven_v4, eleven_v4_turbo, eleven_turbo_v2, eleven_turbo_v2_5,
         /// eleven_flash_v2, eleven_flash_v2_5, eleven_multilingual_v2,
         /// eleven_v3_conversational. Note: `eleven_v3` (the dialogue/ttv
         /// model) is rejected by the Agents API — use eleven_v3_conversational
@@ -1819,7 +1819,7 @@ pub struct DialogueArgs {
     #[arg(short, long)]
     pub output: Option<String>,
 
-    /// Model ID (default eleven_v3).
+    /// Model ID (default eleven_v3); use eleven_v4 for the latest HTTP model.
     #[arg(long)]
     pub model: Option<String>,
 
@@ -1853,19 +1853,19 @@ pub struct DialogueArgs {
     #[arg(long)]
     pub stability: Option<f32>,
 
-    /// Similarity boost 0.0-1.0.
+    /// Similarity 0.0-1.0.
     #[arg(long)]
     pub similarity: Option<f32>,
 
-    /// Style exaggeration 0.0-1.0.
+    /// Unsupported by Text to Dialogue; use stability and similarity.
     #[arg(long)]
     pub style: Option<f32>,
 
-    /// Speaker boost (default on).
+    /// Unsupported by Text to Dialogue; use stability and similarity.
     #[arg(long)]
     pub speaker_boost: Option<bool>,
 
-    /// ISO language code (mostly for v3; optional).
+    /// ISO language code (optional).
     #[arg(long)]
     pub language: Option<String>,
 
@@ -1873,13 +1873,32 @@ pub struct DialogueArgs {
     #[arg(long, value_parser = ["auto", "on", "off"])]
     pub apply_text_normalization: Option<String>,
 
-    /// Latency optimization level (0=none, 4=max).
+    /// Unsupported by Text to Dialogue; use --stream.
     #[arg(long, value_parser = clap::value_parser!(u32).range(0..=4))]
     pub optimize_streaming_latency: Option<u32>,
 
     /// Zero-retention mode (enterprise only).
     #[arg(long)]
     pub no_logging: bool,
+    /// Preceding text for continuity (max 100 characters).
+    #[arg(long)]
+    pub previous_text: Option<String>,
+
+    /// Following text for continuity (max 100 characters; API field future_text).
+    #[arg(long)]
+    pub next_text: Option<String>,
+
+    /// Previous dialogue request ID (repeatable, max 3).
+    #[arg(long = "previous-request-id", value_name = "ID")]
+    pub previous_request_ids: Vec<String>,
+
+    /// Next dialogue request ID (repeatable, max 3).
+    #[arg(long = "next-request-id", value_name = "ID")]
+    pub next_request_ids: Vec<String>,
+
+    /// Generate using the Instant Voice Clone version of a Professional Voice Clone.
+    #[arg(long)]
+    pub use_pvc_as_ivc: bool,
 }
 
 // ── Align ──────────────────────────────────────────────────────────────────

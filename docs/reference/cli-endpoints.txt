@@ -96,5 +96,9 @@
 /v1/voices/{X}                                                                    -- src/commands/voices/show.rs
 /v1/voices/{}/edit                                                                -- src/commands/voices/edit.rs
 /v1/voices/{}/samples/{}                                                          -- src/commands/voices/edit.rs
+/v2/voices                                                                        -- src/commands/audio.rs
+/v2/voices                                                                        -- src/commands/tts.rs
+/v2/voices                                                                        -- src/commands/voices/list.rs
+/v2/voices                                                                        -- src/commands/voices/resolve.rs
 
-Total unique: 81
+Total unique: 82
